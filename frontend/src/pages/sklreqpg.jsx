@@ -13,6 +13,7 @@ const SchoolAccountForm = () => {
     confirmPassword: "",
     certificate: null,
   });
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -22,9 +23,39 @@ const SchoolAccountForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("Passwords do not match");
+      return;
+    }
+    try {
+      const response = await fetch("http://localhost:4000/api/school-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          SchoolRequestID: formData.schoolName.replace(/\s+/g, "_") + "_" + Math.floor(Math.random() * 10000),
+          Username: formData.username,
+          Password: formData.password,
+          Address: formData.address,
+          ContactNumber: formData.contact,
+          Email: formData.email,
+          PrincipalName: formData.principal,
+          SchoolLogo: formData.certificate ? formData.certificate.name : "",
+          Certificate: formData.certificate ? formData.certificate.name : ""
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage("School request submitted successfully!");
+        // Optionally reset form
+      } else {
+        setMessage(data.message || "Submission failed");
+      }
+    } catch (err) {
+      setMessage("Server error. Please try again later.");
+    }
   };
 
   return (
@@ -83,7 +114,7 @@ const SchoolAccountForm = () => {
           <input type="checkbox" required />
           <span>I confirm the information is accurate and official.</span>
         </div>
-
+        {message && <div className="skl-message">{message}</div>}
         <button type="submit" className="skl-button">Request Admin Account</button>
       </form>
     </div>
