@@ -1,0 +1,82 @@
+/* ===== School Admin Request Form Styles (Only for skl- classes) ===== */
+
+.skl-wrapper {
+  @apply flex justify-center items-center min-h-screen bg-white;
+}
+
+.skl-box {
+  @apply max-w-xl w-full p-8 border rounded-lg shadow-sm bg-white;
+}
+
+.skl-title {
+  @apply text-xl font-semibold mb-6 text-center text-gray-800;
+}
+
+.skl-form {
+  @apply space-y-5;
+}
+
+.skl-group {
+  @apply text-left;
+}
+
+.skl-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.skl-input {
+  @apply px-4 py-2 w-full border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.skl-input[type="file"] {
+  @apply file:mr-4 file:py-2 file:px-4
+         file:rounded-md file:border-0
+         file:text-sm file:font-semibold
+         file:bg-blue-50 file:text-blue-700
+         hover:file:bg-blue-100;
+}
+
+.skl-checkbox {
+  @apply flex items-start text-sm text-gray-600 gap-2;
+}
+
+.skl-button {
+  @apply w-full bg-blue-600 text-white py-2 rounded-md font-semibold text-sm hover:bg-blue-700;
+}
+
+
+.skl-container {
+  @apply max-w-3xl mx-auto my-10 bg-white p-8 rounded-lg shadow-md;
+}
+
+.skl-title {
+  @apply text-2xl font-semibold text-center mb-6;
+}
+
+.skl-form {
+  @apply flex flex-col gap-6;
+}
+
+.skl-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.skl-group {
+  @apply flex flex-col;
+}
+
+.skl-label {
+  @apply mb-1 text-sm font-medium text-gray-700;
+}
+
+.skl-input {
+  @apply border rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.skl-checkbox {
+  @apply flex items-start gap-2 text-sm text-gray-600;
+}
+
+.skl-button {
+  @apply w-full bg-blue-600 text-white font-semibold py-3 rounded-md hover:bg-blue-700 transition;
+}
