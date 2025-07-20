@@ -20,7 +20,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegPage />} />
-        <Route path="/dashboard" element={<DonorDashboard />} />
+        <Route path="/donor-dashboard" element={<DonorDashboard />} />
         <Route path="/donhistoryta" element={<DonHistoryTA />} />
         <Route path="/school-request" element={<SchoolAccountForm />} />
         <Route path="/admin-review" element={<AdminRequestPage />} /> {/* ✅ New route */}
