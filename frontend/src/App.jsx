@@ -7,12 +7,12 @@ import RegPage from "./pages/regpage";
 import DonorDashboard from "./pages/dondashpg";
 import DonHistoryTA from "./pages/donhistoryta";
 import SchoolAccountForm from "./pages/sklreqpg";
-import AdminRequestPage from "./pages/adminreqpg"; 
-import PaymentPage from "./pages/paymentpage"; 
+import AdminRequestPage from "./pages/adminreqpg";
+import PaymentPage from "./pages/paymentpage";
 
 // Styles
 import "./index.css";
-import "./indexskl.css";
+
 
 function App() {
   return (

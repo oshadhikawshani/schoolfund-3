@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../indexskl.css";
+
 
 const SchoolAccountForm = () => {
   const [formData, setFormData] = useState({

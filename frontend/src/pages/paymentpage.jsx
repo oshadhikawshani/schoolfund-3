@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../index.css"; // Make sure this includes the .pay- styles
+
 
 export default function PaymentPage() {
   const [cardNumber, setCardNumber] = useState("");
