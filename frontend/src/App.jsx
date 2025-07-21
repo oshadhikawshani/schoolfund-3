@@ -9,6 +9,9 @@ import DonHistoryTA from "./pages/donhistoryta";
 import SchoolAccountForm from "./pages/sklreqpg";
 import AdminRequestPage from "./pages/adminreqpg";
 import PaymentPage from "./pages/paymentpage";
+import SchoolReqPending from "./pages/SchoolReqPending";
+import SchoolMain from "./pages/SchoolMain";
+import SchoolCreateCampaign from "./pages/SchoolCreateCampaign";
 
 // Styles
 import "./index.css";
@@ -23,7 +26,10 @@ function App() {
         <Route path="/donor-dashboard" element={<DonorDashboard />} />
         <Route path="/donhistoryta" element={<DonHistoryTA />} />
         <Route path="/school-request" element={<SchoolAccountForm />} />
-        <Route path="/admin-review" element={<AdminRequestPage />} /> {/* ✅ New route */}
+        <Route path="/req-pending" element={<SchoolReqPending />} />
+        <Route path="/admin-review" element={<AdminRequestPage />} />
+        <Route path="/school-main" element={<SchoolMain />} />
+        <Route path="/school-create-campaign" element={<SchoolCreateCampaign />} />
         <Route path="/payment" element={<PaymentPage />} />
       </Routes>
     </Router>

@@ -1,5 +1,6 @@
 const express = require('express');
 const SchoolRequest = require('../models/SchoolRequest');
+const { sendRegistrationEmail, sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
 const router = express.Router();
 
 // Create a new school request
@@ -15,6 +16,16 @@ router.post('/', async (req, res) => {
     }
     const request = new SchoolRequest({ SchoolRequestID, Username, Password, Address, ContactNumber, Email, PrincipalName, SchoolLogo, Certificate });
     await request.save();
+    
+    // Send registration confirmation email
+    try {
+      await sendRegistrationEmail(request);
+      console.log('Registration email sent to:', Email);
+    } catch (emailError) {
+      console.error('Failed to send registration email:', emailError);
+      // Don't fail the request if email fails
+    }
+    
     res.status(201).json({ message: 'School request submitted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -25,18 +36,178 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const requests = await SchoolRequest.find();
+    console.log('All school requests:', requests.map(req => ({
+      _id: req._id,
+      Username: req.Username,
+      Status: req.Status,
+      PrincipalName: req.PrincipalName
+    })));
     res.json(requests);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// Placeholder for approve/reject
-router.post('/approve/:id', (req, res) => {
-  res.json({ message: 'Approve endpoint (to be implemented)' });
+// Get request by email (for status checking) - Route parameter version
+router.get('/status/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const decodedEmail = decodeURIComponent(email);
+    console.log('Looking for request with email:', decodedEmail);
+    
+    const request = await SchoolRequest.findOne({ Email: decodedEmail });
+    if (!request) {
+      console.log('Request not found for email:', decodedEmail);
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    console.log('Request found:', request);
+    res.json(request);
+  } catch (err) {
+    console.error('Error in status route:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 });
-router.post('/reject/:id', (req, res) => {
-  res.json({ message: 'Reject endpoint (to be implemented)' });
+
+// Alternative: Get request by email using query parameter
+router.get('/status', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: 'Email parameter is required' });
+    }
+    
+    console.log('Looking for request with email (query):', email);
+    const request = await SchoolRequest.findOne({ Email: email });
+    if (!request) {
+      console.log('Request not found for email (query):', email);
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    console.log('Request found (query):', request);
+    res.json(request);
+  } catch (err) {
+    console.error('Error in status query route:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Approve a school request
+router.post('/approve/:id', async (req, res) => {
+  try {
+    const request = await SchoolRequest.findByIdAndUpdate(
+      req.params.id,
+      { Status: 'approved' },
+      { new: true }
+    );
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    
+    // Send approval email
+    try {
+      await sendApprovalEmail(request);
+      console.log('Approval email sent to:', request.Email);
+    } catch (emailError) {
+      console.error('Failed to send approval email:', emailError);
+      // Don't fail the request if email fails
+    }
+    
+    res.json({ message: 'Request approved successfully', request });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Reject a school request
+router.post('/reject/:id', async (req, res) => {
+  try {
+    const { reason } = req.body; // Optional reason for rejection
+    const request = await SchoolRequest.findByIdAndUpdate(
+      req.params.id,
+      { Status: 'declined' },
+      { new: true }
+    );
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    
+    // Send rejection email
+    try {
+      await sendRejectionEmail(request, reason);
+      console.log('Rejection email sent to:', request.Email);
+    } catch (emailError) {
+      console.error('Failed to send rejection email:', emailError);
+      // Don't fail the request if email fails
+    }
+    
+    res.json({ message: 'Request rejected successfully', request });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// School login
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    console.log('School login attempt:', { username, password: password ? '***' : 'missing' });
+    
+    if (!username || !password) {
+      console.log('Missing username or password');
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    // Find the school request with the provided username
+    const school = await SchoolRequest.findOne({ Username: username });
+    
+    console.log('School found:', school ? { 
+      _id: school._id, 
+      Username: school.Username, 
+      Status: school.Status,
+      PasswordMatch: school.Password === password 
+    } : 'Not found');
+    
+    if (!school) {
+      console.log('School not found with username:', username);
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    // Check if the school is approved
+    if (school.Status !== 'approved') {
+      console.log('School not approved. Status:', school.Status);
+      return res.status(401).json({ message: 'Your account is not yet approved. Please wait for admin approval.' });
+    }
+
+    // Check password (in a real app, you'd hash the password)
+    if (school.Password !== password) {
+      console.log('Password mismatch for school:', school.Username);
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    console.log('Login successful for school:', school.Username);
+
+    // Create a simple token (in a real app, use JWT)
+    const token = `school_${school._id}_${Date.now()}`;
+    
+    // Return school data and token
+    res.json({
+      message: 'Login successful',
+      token: token,
+      school: {
+        _id: school._id,
+        PrincipalName: school.PrincipalName,
+        Email: school.Email,
+        ContactNumber: school.ContactNumber,
+        Address: school.Address,
+        Username: school.Username,
+        SchoolRequestID: school.SchoolRequestID,
+        Status: school.Status
+      }
+    });
+  } catch (err) {
+    console.error('Error in school login:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 });
 
 module.exports = router; 

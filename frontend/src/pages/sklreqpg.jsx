@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SchoolAccountForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     schoolName: "",
     address: "",
@@ -48,7 +50,12 @@ const SchoolAccountForm = () => {
       const data = await response.json();
       if (response.ok) {
         setMessage("School request submitted successfully!");
-        // Optionally reset form
+        // Store email for status checking
+        localStorage.setItem("schoolRequestEmail", formData.email);
+        // Navigate to status page after a short delay
+        setTimeout(() => {
+          navigate("/req-pending");
+        }, 1500);
       } else {
         setMessage(data.message || "Submission failed");
       }

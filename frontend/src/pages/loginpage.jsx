@@ -1,13 +1,51 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../images/logoskl.jpg";
+import landingBg from "../images/landing-bg.jpg";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState("");
+  const [loginType, setLoginType] = useState("donor"); // "donor", "school", "admin"
   const navigate = useNavigate();
+
+  const handleSchoolLogin = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    
+    if (!email || !password) {
+      setMessage("Please enter both username and password");
+      return;
+    }
+
+    console.log('Attempting school login with:', { username: email, password: password ? '***' : 'missing' });
+
+    try {
+      const response = await fetch("http://localhost:4000/api/school-requests/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
+        credentials: "include"
+      });
+      const data = await response.json();
+      
+      console.log('Login response:', { status: response.status, data });
+      
+      if (response.ok) {
+        // Store school data and token
+        localStorage.setItem("schoolToken", data.token);
+        localStorage.setItem("schoolData", JSON.stringify(data.school));
+        navigate("/school-main");
+      } else {
+        setMessage(data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setMessage("Server error. Please try again later.");
+    }
+  };
 
   const handleOtherLogin = (role) => (e) => {
     e.preventDefault();
@@ -41,7 +79,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-8">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 py-8"
+      style={{
+        backgroundImage: `url(${landingBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 mx-auto">
         {/* Logo and Header */}
         <div className="text-center mb-8">
@@ -52,15 +98,15 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <form className="space-y-6">
-          {/* Email Input */}
+          {/* Email/Username Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+              {loginType === "school" ? "Username" : "Email Address"}
             </label>
             <input
-              type="email"
+              type={loginType === "school" ? "text" : "email"}
               required
-              placeholder="you@example.com"
+              placeholder={loginType === "school" ? "Enter your username" : "you@example.com"}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -109,42 +155,74 @@ export default function LoginPage() {
             <button
               type="submit"
               onClick={handleOtherLogin("admin")}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+              style={{
+                backgroundColor: '#0091d9',
+                '--tw-ring-color': '#0091d9'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#007bb8'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#0091d9'}
             >
               Login as Admin
             </button>
             <button
               type="submit"
-              onClick={handleOtherLogin("school")}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              onClick={handleSchoolLogin}
+              className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+              style={{
+                backgroundColor: '#0091d9',
+                '--tw-ring-color': '#0091d9'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#007bb8'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#0091d9'}
             >
               Login as School
             </button>
             <button
               type="submit"
               onClick={handleDonorLogin}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+              style={{
+                backgroundColor: '#0091d9',
+                '--tw-ring-color': '#0091d9'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#007bb8'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#0091d9'}
             >
               Login as Donor
             </button>
           </div>
         </form>
 
-        {/* Footer Links */}
-        <div className="mt-8 text-center space-y-2">
-          <p className="text-sm text-gray-600">
-            Create a school account?{" "}
-            <Link to="/school-request" className="text-blue-600 hover:text-blue-500 font-medium">
-              Click here
-            </Link>
-          </p>
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
-              Sign up as Donor
-            </Link>
-          </p>
-        </div>
+                  {/* Footer Links */}
+          <div className="mt-8 text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              Create a school account?{" "}
+              <Link to="/school-request" className="text-blue-600 hover:text-blue-500 font-medium">
+                Click here
+              </Link>
+            </p>
+            <p className="text-sm text-gray-600">
+              Check school request status?{" "}
+              <button 
+                onClick={() => {
+                  const email = prompt("Enter your school email to check status:");
+                  if (email) {
+                    window.open(`http://localhost:4000/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
+                  }
+                }}
+                className="text-blue-600 hover:text-blue-500 font-medium"
+              >
+                Click here
+              </button>
+            </p>
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+                Sign up as Donor
+              </Link>
+            </p>
+          </div>
       </div>
     </div>
   );
