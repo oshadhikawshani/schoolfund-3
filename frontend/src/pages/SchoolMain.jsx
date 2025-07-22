@@ -106,6 +106,12 @@ export default function SchoolMain() {
         >
           Logout
         </button>
+        <button
+          onClick={() => navigate('/principal-login')}
+          className="absolute top-4 right-28 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-20"
+        >
+          Principal Login
+        </button>
       </div>
 
       {/* Main Content */}

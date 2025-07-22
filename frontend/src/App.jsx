@@ -12,6 +12,7 @@ import PaymentPage from "./pages/paymentpage";
 import SchoolReqPending from "./pages/SchoolReqPending";
 import SchoolMain from "./pages/SchoolMain";
 import SchoolCreateCampaign from "./pages/SchoolCreateCampaign";
+import PrincipalLogin from "./pages/principalLogin";
 
 // Styles
 import "./index.css";
@@ -30,6 +31,7 @@ function App() {
         <Route path="/admin-review" element={<AdminRequestPage />} />
         <Route path="/school-main" element={<SchoolMain />} />
         <Route path="/school-create-campaign" element={<SchoolCreateCampaign />} />
+        <Route path="/principal-login" element={<PrincipalLogin />} />
         <Route path="/payment" element={<PaymentPage />} />
       </Routes>
     </Router>
