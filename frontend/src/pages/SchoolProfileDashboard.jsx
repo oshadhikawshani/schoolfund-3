@@ -128,11 +128,10 @@ export default function SchoolProfileDashboard() {
             </div>
             <div className="space-y-4">
               {campaigns && campaigns.length > 0 ? (
-                (() => {
-                  const c = campaigns[0];
+                campaigns.map((c, idx) => {
                   const percent = c.amount ? Math.round(((c.raised || 0) / c.amount) * 100) : 0;
                   return (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-2 shadow-sm">
+                    <div key={idx} className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-2 shadow-sm">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-lg font-semibold text-gray-900">{c.campaignName || c.name || "Campaign"}</span>
                         <span className="bg-green-400 text-white px-4 py-1 rounded-full text-sm font-semibold">{c.status || "Active"}</span>
@@ -149,7 +148,7 @@ export default function SchoolProfileDashboard() {
                       </div>
                     </div>
                   );
-                })()
+                })
               ) : (
                 <div className="text-gray-400">No active campaigns</div>
               )}
@@ -158,7 +157,7 @@ export default function SchoolProfileDashboard() {
           <div className="bg-white rounded-xl shadow p-6">
             <div className="flex justify-between items-center mb-4">
               <div className="font-semibold">Recent Expenses</div>
-              <button className="bg-blue-600 text-white px-4 py-1 rounded">Add Expense</button>
+              {/* <button className="bg-blue-600 text-white px-4 py-1 rounded">Add Expense</button> */}
             </div>
             <div className="space-y-4">
               {expenses && expenses.length > 0 ? (
@@ -169,7 +168,7 @@ export default function SchoolProfileDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-gray-400">No recent expenses</div>
+                <div className="text-gray-400">To be implemented</div>
               )}
             </div>
           </div>

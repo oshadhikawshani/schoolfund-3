@@ -65,8 +65,8 @@ const SchoolAccountForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-lg rounded-lg p-4">
           <h2 className="text-xl font-bold text-gray-900 text-center mb-4">
             Request Admin Account – School Registration

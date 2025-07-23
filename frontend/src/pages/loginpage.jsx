@@ -9,6 +9,9 @@ export default function LoginPage() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState("");
   const [loginType, setLoginType] = useState("donor"); // "donor", "school", "admin"
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
   const navigate = useNavigate();
 
   const handleSchoolLogin = async (e) => {
@@ -47,12 +50,23 @@ export default function LoginPage() {
     }
   };
 
-  const handleOtherLogin = (role) => (e) => {
+  // Remove handleOtherLogin for admin, add new admin login handler
+  const handleAdminLogin = (e) => {
     e.preventDefault();
-    if (role === "admin") {
+    setAdminPassword("");
+    setAdminError("");
+    setShowAdminModal(true);
+  };
+
+  const handleAdminModalSubmit = (e) => {
+    e.preventDefault();
+    if (adminPassword === "admin123") {
+      setShowAdminModal(false);
+      setAdminPassword("");
+      setAdminError("");
       navigate("/admin-review");
     } else {
-      alert(`Login for ${role} clicked`);
+      setAdminError("Incorrect admin password");
     }
   };
 
@@ -89,6 +103,40 @@ export default function LoginPage() {
       }}
     >
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 mx-auto">
+        {/* Admin Login Modal */}
+        {showAdminModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
+              <h3 className="text-lg font-semibold mb-4 text-center">Admin Login</h3>
+              <form onSubmit={handleAdminModalSubmit}>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter admin password"
+                  value={adminPassword}
+                  onChange={e => setAdminPassword(e.target.value)}
+                  autoFocus
+                />
+                {adminError && <div className="text-red-600 text-sm mb-2 text-center">{adminError}</div>}
+                <div className="flex justify-between mt-4">
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    onClick={() => { setShowAdminModal(false); setAdminPassword(""); setAdminError(""); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Login
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="School Fund Logo" className="w-16 h-16 mx-auto mb-4" />
@@ -154,7 +202,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <button
               type="submit"
-              onClick={handleOtherLogin("admin")}
+              onClick={handleAdminLogin}
               className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
               style={{
                 backgroundColor: '#0091d9',
