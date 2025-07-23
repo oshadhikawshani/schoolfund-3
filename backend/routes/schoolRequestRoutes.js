@@ -1,5 +1,6 @@
 const express = require('express');
 const SchoolRequest = require('../models/SchoolRequest');
+const Principal = require('../models/Principal');
 const { sendRegistrationEmail, sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
 const router = express.Router();
 
@@ -14,7 +15,10 @@ router.post('/', async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: 'A request with this email already exists' });
     }
-    const request = new SchoolRequest({ SchoolRequestID, Username, Password, Address, ContactNumber, Email, PrincipalName, SchoolLogo, Certificate });
+    // Generate principal credentials
+    const principalUsername = PrincipalName;
+    const principalPassword = `${PrincipalName}${Math.floor(100 + Math.random() * 900)}`;
+    const request = new SchoolRequest({ SchoolRequestID, Username, Password, Address, ContactNumber, Email, PrincipalName, SchoolLogo, Certificate, principalUsername, principalPassword });
     await request.save();
     
     // Send registration confirmation email
@@ -101,16 +105,27 @@ router.post('/approve/:id', async (req, res) => {
     if (!request) {
       return res.status(404).json({ message: 'Request not found' });
     }
-    
-    // Send approval email
+
+    // Generate principal credentials
+    const principalUsername = request.PrincipalName;
+    const principalPassword = `${request.PrincipalName}${Math.floor(100 + Math.random() * 900)}`;
+
+    // Create principal user if not exists
+    let principal = await Principal.findOne({ username: principalUsername });
+    if (!principal) {
+      principal = new Principal({ username: principalUsername, password: principalPassword });
+      await principal.save();
+    }
+
+    // Send approval email with credentials
     try {
-      await sendApprovalEmail(request);
+      await sendApprovalEmail(request, { username: principalUsername, password: principalPassword });
       console.log('Approval email sent to:', request.Email);
     } catch (emailError) {
       console.error('Failed to send approval email:', emailError);
       // Don't fail the request if email fails
     }
-    
+
     res.json({ message: 'Request approved successfully', request });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

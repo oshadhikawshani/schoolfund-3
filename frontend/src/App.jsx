@@ -12,6 +12,9 @@ import PaymentPage from "./pages/paymentpage";
 import SchoolReqPending from "./pages/SchoolReqPending";
 import SchoolMain from "./pages/SchoolMain";
 import SchoolCreateCampaign from "./pages/SchoolCreateCampaign";
+import PrincipalLogin from './pages/principalLogin';
+import PrincipalDashboard from "./pages/principalDashboard";
+import SchoolProfileDashboard from "./pages/SchoolProfileDashboard";
 
 // Styles
 import "./index.css";
@@ -31,6 +34,9 @@ function App() {
         <Route path="/school-main" element={<SchoolMain />} />
         <Route path="/school-create-campaign" element={<SchoolCreateCampaign />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/principal-login" element={<PrincipalLogin />} />
+        <Route path="/principal-dashboard" element={<PrincipalDashboard />} />
+        <Route path="/school/profile" element={<SchoolProfileDashboard />} />
       </Routes>
     </Router>
   );

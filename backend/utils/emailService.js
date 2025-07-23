@@ -92,7 +92,7 @@ const sendRegistrationEmail = async (schoolData) => {
 };
 
 // Email template for school approval notification
-const sendApprovalEmail = async (schoolData) => {
+const sendApprovalEmail = async (schoolData, credentials) => {
   try {
     const transporter = createTransporter();
     
@@ -117,7 +117,11 @@ const sendApprovalEmail = async (schoolData) => {
               </tr>
               <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Username:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${schoolData.Username}</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${credentials?.username || ''}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Password:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${credentials?.password || ''}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Status:</td>
@@ -225,8 +229,56 @@ const sendRejectionEmail = async (schoolData, reason = '') => {
   }
 };
 
+// Email template for principal credentials for high-value campaign approval
+const sendPrincipalCredentialsEmail = async (school, credentials, campaign) => {
+  try {
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: emailConfig.emailUser,
+      to: school.Email,
+      subject: 'Principal Credentials for Campaign Approval - SchoolFund',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #2c3e50; margin-bottom: 10px;">Principal Credentials for Campaign Approval</h2>
+            <p style="color: #34495e; margin-bottom: 15px;">Dear ${school.PrincipalName},</p>
+            <p style="color: #34495e; margin-bottom: 15px;">A new high-value campaign (Rs. ${campaign.amount}) has been submitted and requires your approval.</p>
+            <h3 style="color: #2c3e50; margin-bottom: 10px;">Campaign Details:</h3>
+            <ul style="color: #34495e;">
+              <li><strong>Name:</strong> ${campaign.campaignName}</li>
+              <li><strong>Description:</strong> ${campaign.description}</li>
+              <li><strong>Goal:</strong> Rs. ${campaign.amount}</li>
+              <li><strong>Deadline:</strong> ${campaign.deadline ? new Date(campaign.deadline).toLocaleDateString() : '-'}</li>
+            </ul>
+            <h3 style="color: #2c3e50; margin-top: 20px;">Principal Login Credentials:</h3>
+            <ul style="color: #34495e;">
+              <li><strong>Username:</strong> ${credentials.username}</li>
+              <li><strong>Password:</strong> ${credentials.password}</li>
+            </ul>
+            <p style="color: #34495e; margin-top: 15px;">Use these credentials to log in to the principal dashboard and review the campaign.</p>
+            <a href="http://localhost:5173/principal-login" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 15px;">Principal Login</a>
+          </div>
+          <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+            <p style="color: #7f8c8d; margin: 0; font-size: 14px;">
+              This is an automated message. Please do not reply to this email.<br>
+              If you have any questions, please contact our support team.
+            </p>
+          </div>
+        </div>
+      `
+    };
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Principal credentials email sent successfully:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('Error sending principal credentials email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendRegistrationEmail,
   sendApprovalEmail,
-  sendRejectionEmail
+  sendRejectionEmail,
+  sendPrincipalCredentialsEmail
 }; 

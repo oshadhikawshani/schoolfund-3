@@ -11,6 +11,7 @@ import healthcheckdash from "../images/healthcheckdash.jpg";
 export default function SchoolMain() {
   const [schoolData, setSchoolData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,11 +24,41 @@ export default function SchoolMain() {
     setLoading(false);
   }, [navigate]);
 
+  useEffect(() => {
+    // Fetch campaigns for this school from backend
+    async function fetchCampaigns() {
+      if (!schoolData) return;
+      try {
+        const res = await fetch(`http://localhost:4000/api/campaigns/school/${schoolData.SchoolRequestID}`);
+        const data = await res.json();
+        setCampaigns(data);
+      } catch (err) {
+        console.error("Failed to fetch campaigns:", err);
+        setCampaigns([]);
+      }
+    }
+    fetchCampaigns();
+  }, [schoolData]);
+
   const handleLogout = () => {
     localStorage.removeItem("schoolData");
     localStorage.removeItem("schoolToken");
     navigate("/");
   };
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString();
+  }
+
+  function daysLeft(deadline) {
+    if (!deadline) return "-";
+    const now = new Date();
+    const end = new Date(deadline);
+    const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  }
 
   if (loading) {
     return (
@@ -40,44 +71,6 @@ export default function SchoolMain() {
   if (!schoolData) {
     return null;
   }
-
-  // Hardcoded campaigns for this school (replace with API later)
-  const campaigns = [
-    {
-      img: bagdash,
-      title: "Backpack Drive",
-      desc: "Provide backpacks to students in need.",
-      raised: 3500,
-      goal: 10000,
-      days: 10
-    },
-    {
-      img: classroomdash,
-      title: "Classroom Renovation",
-      desc: "Renovate and equip classrooms for better learning.",
-      raised: 8000,
-      goal: 20000,
-      days: 20
-    },
-    {
-      img: healthcheckdash,
-      title: "Health Check Camp",
-      desc: "Organize free health checkups for students.",
-      raised: 4200,
-      goal: 8000,
-      days: 5
-    },
-    {
-      img: disabilitiesdash,
-      title: "Support for Disabled Students",
-      desc: "Assist differently-abled students with resources and support.",
-      raised: 2500,
-      goal: 7000,
-      days: 7
-    },
-
-
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,14 +101,59 @@ export default function SchoolMain() {
         </button>
         <button
           onClick={() => navigate('/principal-login')}
-          className="absolute top-4 right-28 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-20"
+          className="absolute top-4 right-36 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-20"
         >
           Principal Login
+        </button>
+        <button
+          onClick={() => navigate('/school/profile')}
+          className="absolute top-4 right-72 bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-md text-sm font-medium border border-gray-300 shadow transition-colors duration-200 z-20"
+        >
+          Manage Profile
         </button>
       </div>
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Campaigns Section */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 text-center w-full md:w-auto">Our Campaigns</h2>
+            <button
+              className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-base font-medium shadow transition-colors duration-200"
+              onClick={() => navigate('/school-create-campaign')}
+            >
+              + Add Campaign
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {campaigns.map((c, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <img src={c.image || bagdash} alt={c.campaignName} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{c.campaignName}</h3>
+                  <p className="text-gray-600 text-sm mb-3">{c.description}</p>
+                  <div className="mb-3">
+                    <p className="text-gray-800">
+                      <strong>Rs {c.raised ? c.raised.toLocaleString() : 0}</strong> raised
+                    </p>
+                    <p className="text-gray-500 text-sm">of Rs {c.amount ? c.amount.toLocaleString() : 0} goal</p>
+                  </div>
+                  <p className="text-blue-600 font-medium text-sm mb-2">
+                    Deadline: {formatDate(c.deadline)} ({daysLeft(c.deadline)} days left)
+                  </p>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{ width: `${Math.min(100, ((c.raised || 0) / (c.amount || 1)) * 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* School Info Card */}
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">About Our School</h2>
@@ -157,52 +195,7 @@ export default function SchoolMain() {
           </div>
         </div>
 
-        {/* Campaigns Section */}
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 text-center w-full md:w-auto">Our Campaigns</h2>
-            <button
-              className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-base font-medium shadow transition-colors duration-200"
-              onClick={() => navigate('/school-create-campaign')}
-            >
-              + Add Campaign
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {campaigns.map((c, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <img src={c.img} alt={c.title} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{c.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{c.desc}</p>
-                  <div className="mb-3">
-                    <p className="text-gray-800">
-                      <strong>Rs {c.raised.toLocaleString()}</strong> raised
-                    </p>
-                    <p className="text-gray-500 text-sm">of Rs {c.goal.toLocaleString()} goal</p>
-                  </div>
-                  <p className="text-blue-600 font-medium text-sm mb-2">{c.days} days left</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${Math.min(100, (c.raised / c.goal) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Quick Actions */}
-        <div className="flex justify-center gap-4">
-          <button
-            className="flex items-center justify-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
-            onClick={() => navigate("/school/profile")}
-          >
-            Manage Profile
-          </button>
-        </div>
       </main>
     </div>
   );
