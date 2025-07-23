@@ -95,6 +95,7 @@ const sendRegistrationEmail = async (schoolData) => {
 const sendApprovalEmail = async (schoolData) => {
   try {
     const transporter = createTransporter();
+    
     const mailOptions = {
       from: emailConfig.emailUser,
       to: schoolData.Email,
@@ -106,20 +107,17 @@ const sendApprovalEmail = async (schoolData) => {
             <p style="color: #155724; margin-bottom: 15px;">Dear ${schoolData.PrincipalName},</p>
             <p style="color: #155724; margin-bottom: 15px;">Great news! Your school registration request has been approved by our admin team. Your school account is now active and ready to use.</p>
           </div>
+          
           <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 20px;">
-            <h3 style="color: #2c3e50; margin-bottom: 15px;">Your School Account Credentials:</h3>
+            <h3 style="color: #2c3e50; margin-bottom: 15px;">Your School Account Details:</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">School Name:</td>
                 <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${schoolData.SchoolRequestID.replace(/_/g, ' ')}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">School Email (Username):</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${schoolData.Email}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Password:</td>
-                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${schoolData.plainPassword || '[Set during registration]'}</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Username:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; color: #34495e;">${schoolData.Username}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; border-bottom: 1px solid #e9ecef; font-weight: bold; color: #2c3e50;">Status:</td>
@@ -127,15 +125,17 @@ const sendApprovalEmail = async (schoolData) => {
               </tr>
             </table>
           </div>
+          
           <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
             <h3 style="color: #856404; margin-bottom: 15px;">🚀 Next Steps:</h3>
             <ol style="color: #856404; margin: 0; padding-left: 20px;">
               <li style="margin-bottom: 8px;">Visit the SchoolFund platform</li>
-              <li style="margin-bottom: 8px;">Log in using your school email and the password above</li>
+              <li style="margin-bottom: 8px;">Log in using your username and password</li>
               <li style="margin-bottom: 8px;">Access your school dashboard</li>
               <li style="margin-bottom: 8px;">Start creating campaigns and managing your school's funding needs</li>
             </ol>
           </div>
+          
           <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
             <a href="http://localhost:5173/login" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-bottom: 15px;">
               Login to Your Dashboard
@@ -148,6 +148,7 @@ const sendApprovalEmail = async (schoolData) => {
         </div>
       `
     };
+
     const result = await transporter.sendMail(mailOptions);
     console.log('Approval email sent successfully:', result.messageId);
     return result;

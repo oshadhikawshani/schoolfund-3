@@ -57,11 +57,11 @@ export default function PrincipalLogin() {
         <form className="space-y-6" onSubmit={handlePrincipalLogin}>
           {/* Username Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">School Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
             <input
               type="text"
               required
-              placeholder="Enter your school email"
+              placeholder="Enter your username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={username}
               onChange={(e) => setUsername(e.target.value)}

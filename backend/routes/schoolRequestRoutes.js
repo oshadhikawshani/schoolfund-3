@@ -2,7 +2,6 @@ const express = require('express');
 const SchoolRequest = require('../models/SchoolRequest');
 const { sendRegistrationEmail, sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
 const router = express.Router();
-const bcrypt = require('bcrypt');
 
 // Create a new school request
 router.post('/', async (req, res) => {
@@ -94,32 +93,24 @@ router.get('/status', async (req, res) => {
 // Approve a school request
 router.post('/approve/:id', async (req, res) => {
   try {
-    let request = await SchoolRequest.findById(req.params.id);
+    const request = await SchoolRequest.findByIdAndUpdate(
+      req.params.id,
+      { Status: 'approved' },
+      { new: true }
+    );
     if (!request) {
       return res.status(404).json({ message: 'Request not found' });
     }
-    let plainPassword = null;
-    // If password is not set or is empty, generate one
-    if (!request.Password) {
-      plainPassword = Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
-      request.Password = hashedPassword;
-    } else {
-      // If password is already set, we can't recover the plain password, so generate a new one
-      plainPassword = Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
-      request.Password = hashedPassword;
-    }
-    request.Status = 'approved';
-    await request.save();
-    // Send approval email with credentials
+    
+    // Send approval email
     try {
-      await sendApprovalEmail({ ...request.toObject(), plainPassword });
+      await sendApprovalEmail(request);
       console.log('Approval email sent to:', request.Email);
     } catch (emailError) {
       console.error('Failed to send approval email:', emailError);
       // Don't fail the request if email fails
     }
+    
     res.json({ message: 'Request approved successfully', request });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
