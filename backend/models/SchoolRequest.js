@@ -9,7 +9,10 @@ const schoolRequestSchema = new mongoose.Schema({
   Email: { type: String, required: true, unique: true },
   PrincipalName: { type: String, required: true },
   SchoolLogo: { type: String },
-  Certificate: { type: String }
+  Certificate: { type: String },
+  Status: { type: String, enum: ['pending', 'approved', 'declined'], default: 'pending' },
+  principalUsername: { type: String },
+  principalPassword: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SchoolRequest', schoolRequestSchema, 'schoolRequests'); 

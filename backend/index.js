@@ -27,6 +27,12 @@ app.use('/api/users', userRoutes);
 const schoolRequestRoutes = require('./routes/schoolRequestRoutes');
 app.use('/api/school-requests', schoolRequestRoutes);
 
+const campaignRoutes = require('./routes/campaignRoutes');
+app.use('/api/campaigns', campaignRoutes);
+
+const principalRoutes = require('./routes/principalRoutes');
+app.use('/api/principal', principalRoutes);
+
 // MongoDB connection (update .env with your URI)
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
