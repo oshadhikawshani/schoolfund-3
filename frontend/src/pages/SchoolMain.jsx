@@ -13,6 +13,8 @@ export default function SchoolMain() {
   const [schoolData, setSchoolData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [campaigns, setCampaigns] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,32 +135,105 @@ export default function SchoolMain() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {campaigns.map((c, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <img src={c.image || bagdash} alt={c.campaignName} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{c.campaignName}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{c.description}</p>
-                  <div className="mb-3">
-                    <p className="text-gray-800">
-                      <strong>Rs {c.raised ? c.raised.toLocaleString() : 0}</strong> raised
+            {campaigns.map((c, i) => {
+              const isApproved = c.status === 'approved';
+              const cardContent = (
+                <>
+                  <img src={c.image || bagdash} alt={c.campaignName} className="w-full h-40 object-cover" />
+                  {/* Campaign Name and Status Row below image */}
+                  <div className="flex items-center justify-between px-4 pt-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-800">{c.campaignName}</h3>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold 
+                        ${c.status === 'approved' ? 'bg-green-100 text-green-800' : ''}
+                        ${c.status === 'pending' || c.status === 'principal_pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                        ${c.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
+                      `}
+                    >
+                      {c.status === 'approved' && 'Approved'}
+                      {c.status === 'pending' && 'Pending Admin Approval'}
+                      {c.status === 'principal_pending' && 'Pending Principal Approval'}
+                      {c.status === 'rejected' && 'Rejected'}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-gray-600 text-sm mb-3">{c.description}</p>
+                    <div className="mb-3">
+                      <p className="text-gray-800">
+                        <strong>Rs {c.raised ? c.raised.toLocaleString() : 0}</strong> raised
+                      </p>
+                      <p className="text-gray-500 text-sm">of Rs {c.amount ? c.amount.toLocaleString() : 0} goal</p>
+                    </div>
+                    <p className="text-blue-600 font-medium text-sm mb-2">
+                      Deadline: {formatDate(c.deadline)} ({daysLeft(c.deadline)} days left)
                     </p>
-                    <p className="text-gray-500 text-sm">of Rs {c.amount ? c.amount.toLocaleString() : 0} goal</p>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full"
+                        style={{ width: `${Math.min(100, ((c.raised || 0) / (c.amount || 1)) * 100)}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <p className="text-blue-600 font-medium text-sm mb-2">
-                    Deadline: {formatDate(c.deadline)} ({daysLeft(c.deadline)} days left)
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${Math.min(100, ((c.raised || 0) / (c.amount || 1)) * 100)}%` }}
-                    ></div>
-                  </div>
+                </>
+              );
+              return isApproved ? (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => { setSelectedCampaign(c); setModalOpen(true); }}
+                >
+                  {cardContent}
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow opacity-90">
+                  {cardContent}
+                </div>
+              );
+            })}
           </div>
         </div>
+        {/* Modal for campaign details */}
+        {modalOpen && selectedCampaign && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                onClick={() => setModalOpen(false)}
+              >
+                &times;
+              </button>
+              <img src={selectedCampaign.image || bagdash} alt={selectedCampaign.campaignName} className="w-full h-48 object-cover rounded mb-4" />
+              <h2 className="text-2xl font-bold mb-2">{selectedCampaign.campaignName}</h2>
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 
+                  ${selectedCampaign.status === 'approved' ? 'bg-green-100 text-green-800' : ''}
+                  ${selectedCampaign.status === 'pending' || selectedCampaign.status === 'principal_pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                  ${selectedCampaign.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
+                `}
+              >
+                {selectedCampaign.status === 'approved' && 'Approved'}
+                {selectedCampaign.status === 'pending' && 'Pending Admin Approval'}
+                {selectedCampaign.status === 'principal_pending' && 'Pending Principal Approval'}
+                {selectedCampaign.status === 'rejected' && 'Rejected'}
+              </span>
+              <p className="text-gray-700 mb-2"><strong>Description:</strong> {selectedCampaign.description}</p>
+              <p className="text-gray-700 mb-2"><strong>Amount Goal:</strong> Rs {selectedCampaign.amount ? selectedCampaign.amount.toLocaleString() : 0}</p>
+              <p className="text-gray-700 mb-2"><strong>Raised:</strong> Rs {selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0}</p>
+              <p className="text-gray-700 mb-2"><strong>Deadline:</strong> {formatDate(selectedCampaign.deadline)}</p>
+              <p className="text-gray-700 mb-2"><strong>Days Left:</strong> {daysLeft(selectedCampaign.deadline)}</p>
+              <p className="text-gray-700 mb-2"><strong>Status:</strong> {selectedCampaign.status}</p>
+              <p className="text-gray-700 mb-2"><strong>Campaign ID:</strong> {selectedCampaign.campaignID}</p>
+              <p className="text-gray-700 mb-2"><strong>School ID:</strong> {selectedCampaign.schoolID}</p>
+              <p className="text-gray-700 mb-2"><strong>Category ID:</strong> {selectedCampaign.categoryID}</p>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-4 mb-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: `${Math.min(100, ((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* School Info Card */}
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">

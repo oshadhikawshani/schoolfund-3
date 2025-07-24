@@ -81,9 +81,7 @@ export default function PrincipalDashboard() {
         </div>
         {/* Header */}
         <div className="flex items-center gap-4 mb-8 justify-center">
-          <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-3 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0-1.657-1.343-3-3-3s-3 1.343-3 3 1.343 3 3 3 3-1.343 3-3zm0 0c0-1.657 1.343-3 3-3s3 1.343 3 3-1.343 3-3 3-3-1.343-3-3zm0 0v2m0 4h.01" /></svg>
-          </span>
+
           <div>
             <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight drop-shadow">Principal  Dashboard</h1>
             <p className="text-blue-400 mt-1 drop-shadow">Review, approve, or reject school campaigns below.</p>
