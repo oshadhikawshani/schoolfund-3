@@ -69,6 +69,10 @@ export default function DonorDashboard() {
 
       {/* Main Content Area */}
       <div className="flex-1">
+        {/* Back Button */}
+        <div className="mb-4 mt-4">
+          <BackButton />
+        </div>
         {/* Header Navigation */}
         <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-6">
           <div className="flex flex-col items-center space-y-4">

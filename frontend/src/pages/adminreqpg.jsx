@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../index.css";
 import { FaSearch, FaUserCircle } from "react-icons/fa";
+import BackButton from "../components/BackButton";
 
 export default function AdminRequestPage() {
   const [requests, setRequests] = useState([]);
@@ -115,6 +116,10 @@ export default function AdminRequestPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
         {/* Notification */}
         {notification.show && (
           <div className={`mb-6 p-4 rounded-md border shadow-lg flex items-center gap-3 transition-all duration-300 animate-fade-in-fast ${notification.type === 'success'

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../images/logoskl.jpg";
 import landingBg from "../images/landing-bg.jpg";
+import BackButton from "../components/BackButton";
 
 export default function PrincipalLogin() {
   const [username, setUsername] = useState("");
@@ -37,7 +38,7 @@ export default function PrincipalLogin() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center px-4 py-8"
       style={{
         backgroundImage: `url(${landingBg})`,
@@ -47,10 +48,14 @@ export default function PrincipalLogin() {
       }}
     >
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 mx-auto">
+        {/* Back Button */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="School Fund Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-lg font-semibold text-gray-800 mb-1">ALUMNI FUND</h1>
+          {/* <h1 className="text-lg font-semibold text-gray-800 mb-1">ALUMNI FUND</h1> */}
           <h2 className="text-xl font-bold text-gray-900">Principal Login</h2>
         </div>
         {/* Login Form */}

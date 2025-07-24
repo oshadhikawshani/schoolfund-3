@@ -6,6 +6,7 @@ import bagdash from "../images/bagdash.jpg";
 import classroomdash from "../images/classroomdash.jpg";
 import disabilitiesdash from "../images/disabilitiesdash.jpg";
 import healthcheckdash from "../images/healthcheckdash.jpg";
+import BackButton from "../components/BackButton";
 
 
 export default function SchoolMain() {
@@ -79,6 +80,10 @@ export default function SchoolMain() {
         className="relative h-64 md:h-80 flex items-center justify-center bg-cover bg-center"
         style={{ backgroundImage: `url(${landingBg})` }}
       >
+        {/* Floating Back Button */}
+        <div className="absolute top-4 left-4 z-30">
+          <BackButton />
+        </div>
         <div className="absolute inset-0 bg-[#0091d9] bg-opacity-40"></div>
         <div className="relative z-10 flex flex-col items-center text-center">
           <img
@@ -115,6 +120,7 @@ export default function SchoolMain() {
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Campaigns Section */}
         <div className="mb-12">
           <div className="flex justify-between items-center mb-6">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import landingBg from "../images/landing-bg.jpg";
-
+import BackButton from "../components/BackButton";
 export default function PrincipalDashboard() {
   const [pendingCampaigns, setPendingCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +75,10 @@ export default function PrincipalDashboard() {
         <div className="absolute inset-0 " />
       </div>
       <div className="w-full max-w-4xl z-10 relative">
+        {/* Back Button */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
         {/* Header */}
         <div className="flex items-center gap-4 mb-8 justify-center">
           <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-3 shadow-lg">

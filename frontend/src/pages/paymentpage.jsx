@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BackButton from "../components/BackButton";
 
 export default function PaymentPage() {
   const [cardNumber, setCardNumber] = useState("");
@@ -26,6 +27,10 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+        {/* Back Button */}
+        <div className="mb-4">
+          <BackButton />
+        </div>
         <h2 className="text-blue-600 text-2xl font-semibold text-center mb-6">
           Enter Payment Details
         </h2>

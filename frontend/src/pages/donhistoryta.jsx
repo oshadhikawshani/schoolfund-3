@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../index.css";
 import logo from "../images/logoskl.jpg";
+import BackButton from "../components/BackButton";
 
 const donationData = [
   {
@@ -29,6 +30,10 @@ const donationData = [
 export default function DonHistoryTA() {
   return (
     <div className="donhistta-wrapper">
+      {/* Back Button */}
+      <div className="mb-4">
+        <BackButton />
+      </div>
       {/* Navigation */}
       <div className="donhistta-nav">
         <img src={logo} alt="Logo" className="donhistta-logo" />

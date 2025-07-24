@@ -74,6 +74,15 @@ export default function SchoolProfileDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Back
+          </button>
+        </div>
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">

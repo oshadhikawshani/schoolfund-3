@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../images/logoskl.jpg";
 import landingBg from "../images/landing-bg.jpg";
+import BackButton from "../components/BackButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function LoginPage() {
   const handleSchoolLogin = async (e) => {
     e.preventDefault();
     setMessage("");
-    
+
     if (!email || !password) {
       setMessage("Please enter both username and password");
       return;
@@ -33,9 +34,9 @@ export default function LoginPage() {
         credentials: "include"
       });
       const data = await response.json();
-      
+
       console.log('Login response:', { status: response.status, data });
-      
+
       if (response.ok) {
         // Store school data and token
         localStorage.setItem("schoolToken", data.token);
@@ -93,7 +94,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center px-4 py-8"
       style={{
         backgroundImage: `url(${landingBg})`,
@@ -103,6 +104,7 @@ export default function LoginPage() {
       }}
     >
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 mx-auto">
+
         {/* Admin Login Modal */}
         {showAdminModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
@@ -140,7 +142,7 @@ export default function LoginPage() {
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="School Fund Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-lg font-semibold text-gray-800 mb-1">ALUMNI FUND</h1>
+          {/* <h1 className="text-lg font-semibold text-gray-800 mb-1">ALUMNI FUND</h1> */}
           <h2 className="text-xl font-bold text-gray-900">Welcome back! Please login to your account</h2>
         </div>
 
@@ -176,8 +178,8 @@ export default function LoginPage() {
           </div>
 
           {/* Checkbox and Forgot Password */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center">
+          {/* <div className="flex items-center justify-between"> */}
+          {/* <label className="flex items-center">
               <input
                 type="checkbox"
                 checked={isAnonymous}
@@ -185,11 +187,11 @@ export default function LoginPage() {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <span className="ml-2 text-sm text-gray-700">Make my donation anonymous</span>
-            </label>
-            <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
+            </label> */}
+          {/* <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
               Forgot Password?
             </a>
-          </div>
+          </div> */}
 
           {/* Error Message */}
           {message && (
@@ -226,7 +228,7 @@ export default function LoginPage() {
             >
               Login as School
             </button>
-            <button
+            {/* <button
               type="submit"
               onClick={handleDonorLogin}
               className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
@@ -238,39 +240,39 @@ export default function LoginPage() {
               onMouseLeave={(e) => e.target.style.backgroundColor = '#0091d9'}
             >
               Login as Donor
-            </button>
+            </button> */}
           </div>
         </form>
 
-                  {/* Footer Links */}
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              Create a school account?{" "}
-              <Link to="/school-request" className="text-blue-600 hover:text-blue-500 font-medium">
-                Click here
-              </Link>
-            </p>
-            <p className="text-sm text-gray-600">
-              Check school request status?{" "}
-              <button 
-                onClick={() => {
-                  const email = prompt("Enter your school email to check status:");
-                  if (email) {
-                    window.open(`http://localhost:4000/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
-                  }
-                }}
-                className="text-blue-600 hover:text-blue-500 font-medium"
-              >
-                Click here
-              </button>
-            </p>
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
-                Sign up as Donor
-              </Link>
-            </p>
-          </div>
+        {/* Footer Links */}
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-sm text-gray-600">
+            Create a school account?{" "}
+            <Link to="/school-request" className="text-blue-600 hover:text-blue-500 font-medium">
+              Click here
+            </Link>
+          </p>
+          <p className="text-sm text-gray-600">
+            Check school request status?{" "}
+            <button
+              onClick={() => {
+                const email = prompt("Enter your school email to check status:");
+                if (email) {
+                  window.open(`http://localhost:4000/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
+                }
+              }}
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              Click here
+            </button>
+          </p>
+          {/* <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+              Sign up as Donor
+            </Link>
+          </p> */}
+        </div>
       </div>
     </div>
   );
