@@ -16,7 +16,7 @@ export default function PrincipalDashboard() {
       setLoading(true);
       setMessage("");
       try {
-        const res = await fetch(`http://localhost:4000/api/campaigns/principal-dashboard/${schoolID}`);
+        const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/principal-dashboard/${schoolID}`);
         const data = await res.json();
         setPendingCampaigns(data);
       } catch (err) {
@@ -44,7 +44,7 @@ export default function PrincipalDashboard() {
   const handleAction = async (campaignId, action) => {
     setMessage("");
     try {
-      const res = await fetch(`http://localhost:4000/api/campaigns/principal-approve/${campaignId}`, {
+      const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/principal-approve/${campaignId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),

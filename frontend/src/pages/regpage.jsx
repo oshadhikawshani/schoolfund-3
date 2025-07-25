@@ -23,7 +23,7 @@ export default function RegisterPage() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:4000/api/users/signup", {
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/users/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, phoneNumber }),
@@ -157,8 +157,8 @@ export default function RegisterPage() {
           {/* Message Display */}
           {message && (
             <div className={`text-sm p-2 rounded-md ${message.includes("successful")
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-700 border border-red-200"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
               }`}>
               {message}
             </div>

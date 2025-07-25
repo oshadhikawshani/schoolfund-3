@@ -27,7 +27,7 @@ export default function LoginPage() {
     console.log('Attempting school login with:', { username: email, password: password ? '***' : 'missing' });
 
     try {
-      const response = await fetch("http://localhost:4000/api/school-requests/login", {
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: email, password }),
@@ -75,7 +75,7 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage("");
     try {
-      const response = await fetch("http://localhost:4000/api/users/login", {
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -258,7 +258,7 @@ export default function LoginPage() {
               onClick={() => {
                 const email = prompt("Enter your school email to check status:");
                 if (email) {
-                  window.open(`http://localhost:4000/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
+                  window.open(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
                 }
               }}
               className="text-blue-600 hover:text-blue-500 font-medium"

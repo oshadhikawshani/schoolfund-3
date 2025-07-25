@@ -73,7 +73,7 @@ const SchoolAccountForm = () => {
       return;
     }
     try {
-      const response = await fetch("http://localhost:4000/api/school-requests", {
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

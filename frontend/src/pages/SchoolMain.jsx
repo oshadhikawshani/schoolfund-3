@@ -32,7 +32,7 @@ export default function SchoolMain() {
     async function fetchCampaigns() {
       if (!schoolData) return;
       try {
-        const res = await fetch(`http://localhost:4000/api/campaigns/school/${schoolData.SchoolRequestID}`);
+        const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`);
         const data = await res.json();
         setCampaigns(data);
       } catch (err) {

@@ -19,7 +19,7 @@ export default function AdminRequestPage() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/school-requests");
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests");
       if (response.ok) {
         const data = await response.json();
         setRequests(data);
@@ -41,7 +41,7 @@ export default function AdminRequestPage() {
   const handleApprove = async (id) => {
     setActionLoading(prev => ({ ...prev, [id]: "approve" }));
     try {
-      const response = await fetch(`http://localhost:4000/api/school-requests/approve/${id}`, {
+      const response = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/approve/${id}`, {
         method: "POST"
       });
       if (response.ok) {
@@ -66,7 +66,7 @@ export default function AdminRequestPage() {
   const confirmReject = async () => {
     setActionLoading(prev => ({ ...prev, [selectedRequest._id]: "reject" }));
     try {
-      const response = await fetch(`http://localhost:4000/api/school-requests/reject/${selectedRequest._id}`, {
+      const response = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/reject/${selectedRequest._id}`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
@@ -123,8 +123,8 @@ export default function AdminRequestPage() {
         {/* Notification */}
         {notification.show && (
           <div className={`mb-6 p-4 rounded-md border shadow-lg flex items-center gap-3 transition-all duration-300 animate-fade-in-fast ${notification.type === 'success'
-              ? 'bg-green-50 text-green-800 border-green-200'
-              : 'bg-red-50 text-red-800 border-red-200'
+            ? 'bg-green-50 text-green-800 border-green-200'
+            : 'bg-red-50 text-red-800 border-red-200'
             }`} role="alert" aria-live="assertive">
             <div className="flex-shrink-0">
               {notification.type === 'success' ? (

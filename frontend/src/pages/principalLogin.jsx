@@ -18,7 +18,7 @@ export default function PrincipalLogin() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:4000/api/principal/login", {
+      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/principal/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

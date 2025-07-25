@@ -42,7 +42,7 @@ export default function SchoolCreateCampaign() {
     async function fetchCampaigns() {
       if (!schoolID) return;
       try {
-        const res = await fetch(`http://localhost:4000/api/campaigns/school/${schoolID}`);
+        const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolID}`);
         const data = await res.json();
         setCampaigns(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -90,7 +90,7 @@ export default function SchoolCreateCampaign() {
         monetaryType: "Monetary",
         allowDonorUpdates: allowDonorUpdatesM,
       };
-      const res = await fetch("http://localhost:4000/api/campaigns/", {
+      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -127,7 +127,7 @@ export default function SchoolCreateCampaign() {
         monetaryType: "Non-Monetary",
         allowDonorUpdates: allowDonorUpdatesN,
       };
-      const res = await fetch("http://localhost:4000/api/campaigns/", {
+      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

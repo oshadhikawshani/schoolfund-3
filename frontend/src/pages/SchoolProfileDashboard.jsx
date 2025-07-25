@@ -20,7 +20,7 @@ export default function SchoolProfileDashboard() {
     if (schoolData && schoolData.SchoolRequestID) {
       setSchool(schoolData);
       // Fetch campaigns for this school
-      fetch(`http://localhost:4000/api/campaigns/school/${schoolData.SchoolRequestID}`)
+      fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`)
         .then(res => res.json())
         .then(data => {
           setCampaigns(data);
