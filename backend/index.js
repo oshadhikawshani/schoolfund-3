@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 4000;
 // ✅ CORS config to allow both localhost and deployed frontend
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app'
+  'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app',
+  'https://schoolfund.vercel.app/'
 ];
 
 app.use(cors({
