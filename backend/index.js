@@ -7,16 +7,19 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ✅ CORS config to allow both localhost and deployed frontend
+
 const allowedOrigins = [
   'http://localhost:5173',
   'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app',
-  'https://schoolfund.vercel.app/'
+  'https://schoolfund.vercel.app',
+  'schoolfund.vercel.app/',
+  'schoolfund.vercel.app',
+
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman or curl)
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
