@@ -8,8 +8,8 @@ const { sendPrincipalCredentialsEmail } = require('../utils/emailService');
 // Create a new campaign
 router.post('/', async (req, res) => {
   try {
-    const { campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline } = req.body;
-    if (!campaignID || !campaignName || !description || !amount || !schoolID || !categoryID || !deadline) {
+    const { campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType } = req.body;
+    if (!campaignID || !campaignName || !description || !amount || !schoolID || !categoryID || !deadline || !monetaryType) {
       return res.status(400).json({ message: 'All required fields must be provided' });
     }
     // Check if school exists and is approved
@@ -21,7 +21,13 @@ router.post('/', async (req, res) => {
     let status = 'approved';
     let principalCredentials = null;
     let campaign = null;
-    if (amount >= 50000) {
+    
+    // For monetary campaigns: require principal approval if amount >= 50,000
+    // For non-monetary campaigns: require principal approval if quantity >= 100
+    const requiresPrincipalApproval = (monetaryType === 'Monetary' && amount >= 50000) || 
+                                     (monetaryType === 'Non-Monetary' && amount >= 100);
+    
+    if (requiresPrincipalApproval) {
       status = 'principal_pending';
       // Generate principal credentials if not already set
       if (!school.principalUsername || !school.principalPassword) {
@@ -34,7 +40,7 @@ router.post('/', async (req, res) => {
       } else {
         principalCredentials = { username: school.principalUsername, password: school.principalPassword };
       }
-      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, status });
+      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status });
       await campaign.save();
       // Send principal credentials email
       try {
@@ -43,7 +49,7 @@ router.post('/', async (req, res) => {
         console.error('Failed to send principal credentials email:', emailErr);
       }
     } else {
-      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, status });
+      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status });
       await campaign.save();
     }
     res.status(201).json({ message: 'Campaign created successfully', campaign, principalCredentials });

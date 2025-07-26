@@ -24,6 +24,7 @@ export default function SchoolCreateCampaign() {
   // Non-Monetary form state
   const [titleN, setTitleN] = useState("");
   const [descriptionN, setDescriptionN] = useState("");
+  const [quantityN, setQuantityN] = useState("");
   const [imageN, setImageN] = useState(null);
   const [categoryIDN, setCategoryIDN] = useState("");
   const [deadlineN, setDeadlineN] = useState("");
@@ -63,6 +64,14 @@ export default function SchoolCreateCampaign() {
   const handleImageToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       if (!file) return resolve("");
+      
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        reject(new Error("File size must be less than 5MB"));
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = reject;
@@ -73,6 +82,29 @@ export default function SchoolCreateCampaign() {
   // Monetary form submit
   const handleSubmitM = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!titleM.trim()) {
+      setMessageM("Please fill in the campaign title.");
+      return;
+    }
+    if (!descriptionM.trim()) {
+      setMessageM("Please fill in the campaign description.");
+      return;
+    }
+    if (!goal || parseInt(goal, 10) <= 0) {
+      setMessageM("Please enter a valid funding goal.");
+      return;
+    }
+    if (!categoryIDM) {
+      setMessageM("Please select a category.");
+      return;
+    }
+    if (!deadlineM) {
+      setMessageM("Please select a deadline.");
+      return;
+    }
+    
     setSubmittingM(true);
     setMessageM("");
     try {
@@ -80,15 +112,14 @@ export default function SchoolCreateCampaign() {
       const campaignID = generateCampaignID();
       const payload = {
         campaignID,
-        campaignName: titleM,
-        description: descriptionM,
+        campaignName: titleM.trim(),
+        description: descriptionM.trim(),
         amount: parseInt(goal, 10),
         image: base64Image,
         schoolID,
         categoryID: categoryIDM,
         deadline: deadlineM,
         monetaryType: "Monetary",
-        allowDonorUpdates: allowDonorUpdatesM,
       };
       const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
         method: "POST",
@@ -111,6 +142,29 @@ export default function SchoolCreateCampaign() {
   // Non-Monetary form submit
   const handleSubmitN = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!titleN.trim()) {
+      setMessageN("Please fill in the campaign title.");
+      return;
+    }
+    if (!descriptionN.trim()) {
+      setMessageN("Please fill in the campaign description.");
+      return;
+    }
+    if (!quantityN || parseInt(quantityN, 10) <= 0) {
+      setMessageN("Please enter a valid quantity needed.");
+      return;
+    }
+    if (!categoryIDN) {
+      setMessageN("Please select a category.");
+      return;
+    }
+    if (!deadlineN) {
+      setMessageN("Please select a deadline.");
+      return;
+    }
+    
     setSubmittingN(true);
     setMessageN("");
     try {
@@ -118,14 +172,14 @@ export default function SchoolCreateCampaign() {
       const campaignID = generateCampaignID();
       const payload = {
         campaignID,
-        campaignName: titleN,
-        description: descriptionN,
+        campaignName: titleN.trim(),
+        description: descriptionN.trim(),
+        amount: parseInt(quantityN, 10),
         image: base64Image,
         schoolID,
         categoryID: categoryIDN,
         deadline: deadlineN,
         monetaryType: "Non-Monetary",
-        allowDonorUpdates: allowDonorUpdatesN,
       };
       const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
         method: "POST",
@@ -262,11 +316,27 @@ export default function SchoolCreateCampaign() {
                     accept="image/jpeg,image/png,application/pdf"
                     className="hidden"
                     id="campaign-image-upload-m"
-                    onChange={e => setImageM(e.target.files[0])}
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // Check file size
+                        const maxSize = 5 * 1024 * 1024; // 5MB
+                        if (file.size > maxSize) {
+                          alert("File size must be less than 5MB. Please choose a smaller file.");
+                          e.target.value = ''; // Clear the input
+                          setImageM(null);
+                          return;
+                        }
+                        setImageM(file);
+                      } else {
+                        setImageM(null);
+                      }
+                    }}
                   />
                   <label htmlFor="campaign-image-upload-m" className="block cursor-pointer text-gray-500 text-sm">
                     Drag and drop files here or click to browse<br />
-                    <span className="text-xs text-gray-400">Supports: JPG, PNG, PDF (Max 5MB)</span>
+                    <span className="text-xs text-gray-400">Supports: JPG, PNG, PDF</span><br />
+                    <span className="text-xs text-red-500 font-semibold">Maximum file size: 5MB</span>
                   </label>
                   {imageM && <div className="mt-2 text-xs text-green-600">{imageM.name}</div>}
                 </div>
@@ -363,6 +433,20 @@ export default function SchoolCreateCampaign() {
                 <div className="text-xs text-gray-400 text-right">{descriptionN.length}/500 Words</div>
               </div>
               <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-1">
+                  Quantity Needed <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., 50 books, 20 chairs, 100 uniforms"
+                  value={quantityN}
+                  onChange={e => setQuantityN(e.target.value)}
+                  required
+                  min={1}
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-1">Campaign Image</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-6 px-2 text-center cursor-pointer hover:border-blue-400 transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-4 4h-4a1 1 0 01-1-1v-4h6v4a1 1 0 01-1 1z" /></svg>
@@ -371,11 +455,27 @@ export default function SchoolCreateCampaign() {
                     accept="image/jpeg,image/png,application/pdf"
                     className="hidden"
                     id="campaign-image-upload-n"
-                    onChange={e => setImageN(e.target.files[0])}
+                    onChange={e => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // Check file size
+                        const maxSize = 5 * 1024 * 1024; // 5MB
+                        if (file.size > maxSize) {
+                          alert("File size must be less than 5MB. Please choose a smaller file.");
+                          e.target.value = ''; // Clear the input
+                          setImageN(null);
+                          return;
+                        }
+                        setImageN(file);
+                      } else {
+                        setImageN(null);
+                      }
+                    }}
                   />
                   <label htmlFor="campaign-image-upload-n" className="block cursor-pointer text-gray-500 text-sm">
                     Drag and drop files here or click to browse<br />
-                    <span className="text-xs text-gray-400">Supports: JPG, PNG, PDF (Max 5MB)</span>
+                    <span className="text-xs text-gray-400">Supports: JPG, PNG, PDF</span><br />
+                    <span className="text-xs text-red-500 font-semibold">Maximum file size: 5MB</span>
                   </label>
                   {imageN && <div className="mt-2 text-xs text-green-600">{imageN.name}</div>}
                 </div>

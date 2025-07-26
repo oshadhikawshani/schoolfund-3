@@ -8,6 +8,7 @@ const campaignSchema = new mongoose.Schema({
   image: { type: String },
   schoolID: { type: String, required: true },
   categoryID: { type: String, required: true },
+  monetaryType: { type: String, enum: ['Monetary', 'Non-Monetary'], required: true },
   status: { type: String, enum: ['pending', 'approved', 'principal_pending', 'rejected'], default: 'pending' },
   deadline: { type: Date, required: true }
 }, { timestamps: true });
