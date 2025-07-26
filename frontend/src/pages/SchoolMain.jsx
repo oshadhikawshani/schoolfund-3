@@ -81,13 +81,15 @@ export default function SchoolMain() {
       {/* Hero Section */}
       <div
         className="relative h-64 md:h-80 flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: `url(${landingBg})` }}
+        style={{
+          backgroundImage: `linear-gradient(180deg, #0804fc 0%, white 100%)`
+        }}
       >
         {/* Floating Back Button */}
         <div className="absolute top-4 left-4 z-30">
           <BackButton />
         </div>
-        <div className="absolute inset-0 bg-[#0091d9] bg-opacity-40"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-white to-[#0804fc] opacity-80"></div>
         <div className="relative z-10 flex flex-col items-center text-center">
           <img
             src={logo}
@@ -97,32 +99,36 @@ export default function SchoolMain() {
           <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
             {schoolData.SchoolRequestID || "School Name"}
           </h1>
-          <p className="mt-2 text-lg md:text-xl text-blue-100 italic font-medium drop-shadow">
+          <p className="mt-2 text-lg md:text-xl text-green-500 italic font-medium">
             "Empowering Minds, Shaping Futures"
           </p>
         </div>
         <button
           onClick={handleLogout}
-          className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-20"
+          className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 z-20 hover:shadow-lg hover:scale-105 transform"
         >
           Logout
         </button>
         <button
           onClick={() => navigate('/principal-login')}
-          className="absolute top-4 right-36 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-20"
+          className="absolute top-4 right-32 md:right-36 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 z-20 hover:shadow-lg hover:scale-105 transform"
+          style={{ backgroundColor: '#0804fc' }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#0603d9'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#0804fc'}
         >
           Principal Login
         </button>
         <button
           onClick={() => navigate('/school/profile')}
-          className="absolute top-4 right-72 bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-md text-sm font-medium border border-gray-300 shadow transition-colors duration-200 z-20"
+          className="absolute top-4 right-20 md:right-72 bg-white hover:bg-gray-100 text-gray-800 px-3 md:px-4 py-2 rounded-md text-xs md:text-sm font-medium border border-gray-300 shadow transition-all duration-200 z-20 hover:shadow-lg hover:scale-105 transform hover:border-gray-400"
         >
-          Manage Profile
+          <span className="hidden md:inline">Manage Profile</span>
+          <span className="md:hidden">Profile</span>
         </button>
       </div>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Campaigns Section */}
         <div className="mb-12">
@@ -135,7 +141,7 @@ export default function SchoolMain() {
               + Add Campaign
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {campaigns.map((c, i) => {
               const isApproved = c.status === 'approved';
               const cardContent = (
@@ -200,13 +206,13 @@ export default function SchoolMain() {
               return isApproved ? (
                 <div
                   key={i}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-1"
                   onClick={() => { setSelectedCampaign(c); setModalOpen(true); }}
                 >
                   {cardContent}
                 </div>
               ) : (
-                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow opacity-90">
+                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 opacity-90 transform hover:scale-102">
                   {cardContent}
                 </div>
               );
@@ -215,165 +221,253 @@ export default function SchoolMain() {
         </div>
         {/* Modal for campaign details */}
         {modalOpen && selectedCampaign && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white bg-opacity-20">
-            <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
-              <button
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                onClick={() => setModalOpen(false)}
-              >
-                &times;
-              </button>
-              <img src={selectedCampaign.image || bagdash} alt={selectedCampaign.campaignName} className="w-full h-48 object-cover rounded mb-4" />
-              <h2 className="text-2xl font-bold mb-2">{selectedCampaign.campaignName}</h2>
-              <div className="flex gap-2 mb-2">
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                    ${selectedCampaign.status === 'approved' ? 'bg-green-100 text-green-800' : ''}
-                    ${selectedCampaign.status === 'pending' || selectedCampaign.status === 'principal_pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                    ${selectedCampaign.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
-                  `}
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md  bg-opacity-30">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden transform transition-all duration-300 scale-100">
+              {/* Modal Header */}
+              <div className="relative">
+                <img
+                  src={selectedCampaign.image || bagdash}
+                  alt={selectedCampaign.campaignName}
+                  className="w-full h-64 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <button
+                  className="absolute top-4 right-4 text-white hover:text-gray-200 hover:bg-black/20 text-3xl font-bold w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 bg-black/30 backdrop-blur-sm"
+                  onClick={() => setModalOpen(false)}
                 >
-                  {selectedCampaign.status === 'approved' && 'Approved'}
-                  {selectedCampaign.status === 'pending' && 'Pending Admin Approval'}
-                  {selectedCampaign.status === 'principal_pending' && 'Pending Principal Approval'}
-                  {selectedCampaign.status === 'rejected' && 'Rejected'}
-                </span>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                    ${selectedCampaign.monetaryType === 'Monetary' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}
-                  `}
-                >
-                  {selectedCampaign.monetaryType === 'Monetary' ? 'Monetary' : 'Non-Monetary'}
-                </span>
+                  &times;
+                </button>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{selectedCampaign.campaignName}</h2>
+                  <div className="flex gap-2 flex-wrap">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
+                        ${selectedCampaign.status === 'approved' ? 'bg-green-500/80 text-white' : ''}
+                        ${selectedCampaign.status === 'pending' || selectedCampaign.status === 'principal_pending' ? 'bg-yellow-500/80 text-white' : ''}
+                        ${selectedCampaign.status === 'rejected' ? 'bg-red-500/80 text-white' : ''}
+                      `}
+                    >
+                      {selectedCampaign.status === 'approved' && '✓ Approved'}
+                      {selectedCampaign.status === 'pending' && '⏳ Pending Admin'}
+                      {selectedCampaign.status === 'principal_pending' && '⏳ Pending Principal'}
+                      {selectedCampaign.status === 'rejected' && '✗ Rejected'}
+                    </span>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
+                        ${selectedCampaign.monetaryType === 'Monetary' ? 'bg-blue-500/80 text-white' : 'bg-purple-500/80 text-white'}
+                      `}
+                    >
+                      {selectedCampaign.monetaryType === 'Monetary' ? '💰 Monetary' : '📦 Non-Monetary'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-700 mb-2"><strong>Description:</strong> {selectedCampaign.description}</p>
-              {selectedCampaign.monetaryType === 'Monetary' ? (
-                <>
-                  <p className="text-gray-700 mb-2"><strong>Funding Goal:</strong> Rs {selectedCampaign.amount ? selectedCampaign.amount.toLocaleString() : 0}</p>
-                  <p className="text-gray-700 mb-2"><strong>Amount Raised:</strong> Rs {selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0}</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-700 mb-2"><strong>Quantity Needed:</strong> {selectedCampaign.amount ? selectedCampaign.amount.toLocaleString() : 0} items</p>
-                  <p className="text-gray-700 mb-2"><strong>Items Received:</strong> {selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0} items</p>
-                </>
-              )}
-              <p className="text-gray-700 mb-2"><strong>Deadline:</strong> {formatDate(selectedCampaign.deadline)}</p>
-              <p className="text-gray-700 mb-2"><strong>Days Left:</strong> {daysLeft(selectedCampaign.deadline)}</p>
-              <p className="text-gray-700 mb-2"><strong>Status:</strong> {selectedCampaign.status}</p>
-              <p className="text-gray-700 mb-2"><strong>Campaign ID:</strong> {selectedCampaign.campaignID}</p>
-              <p className="text-gray-700 mb-2"><strong>School ID:</strong> {selectedCampaign.schoolID}</p>
-              <p className="text-gray-700 mb-2"><strong>Category ID:</strong> {selectedCampaign.categoryID}</p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-4 mb-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${Math.min(100, ((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100)}%` }}
-                ></div>
+
+              {/* Modal Body */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Description
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    {selectedCampaign.description}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {selectedCampaign.monetaryType === 'Monetary' ? (
+                    <>
+                      <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                        <h4 className="font-semibold text-green-800 mb-1">💰 Funding Goal</h4>
+                        <p className="text-2xl font-bold text-green-700">Rs {selectedCampaign.amount ? selectedCampaign.amount.toLocaleString() : 0}</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                        <h4 className="font-semibold text-blue-800 mb-1">📈 Amount Raised</h4>
+                        <p className="text-2xl font-bold text-blue-700">Rs {selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                        <h4 className="font-semibold text-purple-800 mb-1">📦 Quantity Needed</h4>
+                        <p className="text-2xl font-bold text-purple-700">{selectedCampaign.amount ? selectedCampaign.amount.toLocaleString() : 0} items</p>
+                      </div>
+                      <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                        <h4 className="font-semibold text-orange-800 mb-1">✅ Items Received</h4>
+                        <p className="text-2xl font-bold text-orange-700">{selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0} items</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-700 mb-1 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Deadline
+                    </h4>
+                    <p className="text-gray-900 font-medium">{formatDate(selectedCampaign.deadline)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-700 mb-1 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Days Left
+                    </h4>
+                    <p className="text-gray-900 font-medium">{daysLeft(selectedCampaign.deadline)} days</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-700 mb-1 flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Progress
+                    </h4>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, ((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {Math.min(100, Math.round(((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100))}% complete
+                    </p>
+                  </div>
+                </div>
+
+                {/* Technical Details */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Technical Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-600">Campaign ID:</span>
+                      <span className="ml-2 font-mono text-gray-800">{selectedCampaign.campaignID}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">School ID:</span>
+                      <span className="ml-2 font-mono text-gray-800">{selectedCampaign.schoolID}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Category ID:</span>
+                      <span className="ml-2 font-mono text-gray-800">{selectedCampaign.categoryID}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
+        {/* About Our School Section */}
+        <div className="mb-12">
+          <div className="flex mb-3">
+
+            <h2 className="text-2xl font-bold text-gray-900">About Our School</h2>
+          </div>
+        </div>
+
         {/* School Info Card */}
         <div className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg p-8 mb-8 border border-blue-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">About Our School</h2>
-            <div className="w-24 h-1 bg-blue-500 mx-auto rounded-full"></div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">School Name</label>
-                    <p className="text-lg font-bold text-gray-900">{schoolData.SchoolName || schoolData.SchoolRequestID}</p>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* School Name */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
                 </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Principal</label>
-                    <p className="text-lg font-semibold text-gray-900">{schoolData.PrincipalName}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Email</label>
-                    <p className="text-lg text-gray-900 break-all">{schoolData.Email}</p>
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">School Name</label>
+                  <p className="text-lg font-bold text-gray-900">{schoolData.SchoolName || schoolData.SchoolRequestID}</p>
                 </div>
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Contact Number</label>
-                    <p className="text-lg font-semibold text-gray-900">{schoolData.ContactNumber}</p>
-                  </div>
+            {/* Principal */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Principal</label>
+                  <p className="text-lg font-semibold text-gray-900">{schoolData.PrincipalName}</p>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Address</label>
-                    <p className="text-lg text-gray-900">{schoolData.Address}</p>
-                  </div>
+            {/* Email */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Email</label>
+                  <p className="text-lg text-gray-900 break-all">{schoolData.Email}</p>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Username</label>
-                    <p className="text-lg font-semibold text-gray-900">{schoolData.Username}</p>
-                  </div>
+            {/* Contact Number */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Contact Number</label>
+                  <p className="text-lg font-semibold text-gray-900">{schoolData.ContactNumber}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Address</label>
+                  <p className="text-lg text-gray-900">{schoolData.Address}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Username */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Username</label>
+                  <p className="text-lg font-semibold text-gray-900">{schoolData.Username}</p>
                 </div>
               </div>
             </div>
@@ -381,12 +475,8 @@ export default function SchoolMain() {
 
           {/* School Motto/Description */}
           <div className="mt-10 text-center">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white">
-              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
+            <div className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg p-8 text-white max-w-2xl mx-auto">
+
               <h3 className="text-xl font-bold mb-3">Our Mission</h3>
               <p className="text-lg leading-relaxed">
                 Our mission is to nurture every student to reach their full potential and become responsible citizens of tomorrow.
