@@ -7,6 +7,7 @@ import classroomdash from "../images/classroomdash.jpg";
 import disabilitiesdash from "../images/disabilitiesdash.jpg";
 import healthcheckdash from "../images/healthcheckdash.jpg";
 import BackButton from "../components/BackButton";
+import Footer from "../components/Footer";
 
 
 export default function SchoolMain() {
@@ -274,48 +275,129 @@ export default function SchoolMain() {
         )}
 
         {/* School Info Card */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">About Our School</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">School Name</label>
-                <p className="mt-1 text-base text-gray-900 font-semibold">{schoolData.SchoolName || schoolData.PrincipalName}</p>
+        <div className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg p-8 mb-8 border border-blue-100">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">About Our School</h2>
+            <div className="w-24 h-1 bg-blue-500 mx-auto rounded-full"></div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">School Name</label>
+                    <p className="text-lg font-bold text-gray-900">{schoolData.SchoolName || schoolData.SchoolRequestID}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Principal</label>
-                <p className="mt-1 text-base text-gray-900">{schoolData.PrincipalName}</p>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Principal</label>
+                    <p className="text-lg font-semibold text-gray-900">{schoolData.PrincipalName}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="mt-1 text-base text-gray-900">{schoolData.Email}</p>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Email</label>
+                    <p className="text-lg text-gray-900 break-all">{schoolData.Email}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                <p className="mt-1 text-base text-gray-900">{schoolData.ContactNumber}</p>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Contact Number</label>
+                    <p className="text-lg font-semibold text-gray-900">{schoolData.ContactNumber}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <p className="mt-1 text-base text-gray-900">{schoolData.Address}</p>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Address</label>
+                    <p className="text-lg text-gray-900">{schoolData.Address}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <p className="mt-1 text-base text-gray-900">{schoolData.Username}</p>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 uppercase tracking-wide">Username</label>
+                    <p className="text-lg font-semibold text-gray-900">{schoolData.Username}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
           {/* School Motto/Description */}
-          <div className="mt-8 text-center">
-            <p className="text-lg text-gray-700 italic">
-              Our mission is to nurture every student to reach their full potential and become responsible citizens of tomorrow.
-            </p>
+          <div className="mt-10 text-center">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white">
+              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-3">Our Mission</h3>
+              <p className="text-lg leading-relaxed">
+                Our mission is to nurture every student to reach their full potential and become responsible citizens of tomorrow.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Quick Actions */}
       </main>
+      <Footer />
     </div>
   );
 } 

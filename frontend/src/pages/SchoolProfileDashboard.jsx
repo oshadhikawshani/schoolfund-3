@@ -189,12 +189,8 @@ export default function SchoolProfileDashboard() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
           <div>
             <div className="font-bold mb-2">Connecting donors with schools</div>
-            <div className="mb-2">in need to create better educational opportunities for all students.</div>
-            <div className="flex gap-2 mt-2">
-              <span className="bg-white text-[#18104B] rounded-full w-7 h-7 flex items-center justify-center">F</span>
-              <span className="bg-white text-[#18104B] rounded-full w-7 h-7 flex items-center justify-center">I</span>
-              <span className="bg-white text-[#18104B] rounded-full w-7 h-7 flex items-center justify-center">X</span>
-            </div>
+            <div className="mb-2">In need to create better educational opportunities for all students.</div>
+            
           </div>
           <div>
             <div className="font-bold mb-2">Quick Links</div>
@@ -217,15 +213,11 @@ export default function SchoolProfileDashboard() {
           </div>
           <div>
             <div className="font-bold mb-2">Contact Us</div>
-            <div>123 Stublubly, Wijerama Road, Colombo</div>
+            <div>123 Kottawa, Athurugiriya Road, Pannipitiya</div>
             <div>support@schoolfundraising.org</div>
             <div>+94 112 889 844</div>
-            <div className="mt-2">Secure Payment Methods</div>
-            <div className="flex gap-2 mt-1">
-              <span className="bg-white text-[#18104B] rounded w-10 h-6 flex items-center justify-center">Visa</span>
-              <span className="bg-white text-[#18104B] rounded w-10 h-6 flex items-center justify-center">MC</span>
-              <span className="bg-white text-[#18104B] rounded w-10 h-6 flex items-center justify-center">Pay</span>
-            </div>
+            {/* <div className="mt-2">Secure Payment Methods</div> */}
+            
           </div>
         </div>
         <div className="text-center text-xs text-gray-300 mt-6">2023 School Fundraising Platform. All rights reserved. | Privacy Policy | Terms Of Service | Cookie Policy</div>
