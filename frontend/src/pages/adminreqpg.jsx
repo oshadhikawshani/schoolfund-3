@@ -211,7 +211,7 @@ export default function AdminRequestPage() {
                 <div className="px-6 py-4 space-y-3 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-700 w-28">School Name:</span>
-                    <span className="text-gray-800">{req.PrincipalName}</span>
+                    <span className="text-gray-800">{req.SchoolRequestID}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-700 w-28">Principal:</span>
