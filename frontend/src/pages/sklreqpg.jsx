@@ -30,6 +30,17 @@ const SchoolAccountForm = () => {
     });
   };
 
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!file) return resolve("");
+      
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const validate = () => {
     const newErrors = {};
     // School Name
@@ -73,6 +84,9 @@ const SchoolAccountForm = () => {
       return;
     }
     try {
+      // Convert certificate file to base64
+      const certificateBase64 = await convertFileToBase64(formData.certificate);
+      
       const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +99,7 @@ const SchoolAccountForm = () => {
           Email: formData.email,
           PrincipalName: formData.principal,
           SchoolLogo: formData.certificate ? formData.certificate.name : "",
-          Certificate: formData.certificate ? formData.certificate.name : ""
+          Certificate: certificateBase64
         }),
       });
       const data = await response.json();

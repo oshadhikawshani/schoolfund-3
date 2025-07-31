@@ -7,6 +7,7 @@ export default function AdminRequestPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showFullscreenModal, setShowFullscreenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -22,6 +23,18 @@ export default function AdminRequestPage() {
       const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests");
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched requests data:', data);
+        // Log certificate data for debugging
+        data.forEach((req, index) => {
+          console.log(`Request ${index + 1}:`, {
+            id: req._id,
+            schoolName: req.SchoolRequestID,
+            principal: req.PrincipalName,
+            certificate: req.Certificate ? `${req.Certificate.substring(0, 50)}...` : 'null',
+            certificateLength: req.Certificate?.length || 0,
+            schoolLogo: req.SchoolLogo
+          });
+        });
         setRequests(data);
       } else {
         console.error("Failed to fetch requests");
@@ -61,6 +74,118 @@ export default function AdminRequestPage() {
   const handleReject = async (id) => {
     setSelectedRequest(requests.find(req => req._id === id));
     setShowRejectModal(true);
+  };
+
+  const handleViewCertificate = (request) => {
+    console.log('Certificate data:', request.Certificate);
+    console.log('Certificate type:', typeof request.Certificate);
+    console.log('Certificate length:', request.Certificate?.length);
+    setSelectedRequest(request);
+    setShowFullscreenModal(true);
+  };
+
+  const getCertificateSrc = (certificateData) => {
+    console.log('getCertificateSrc called with:', certificateData);
+    console.log('Type:', typeof certificateData);
+    console.log('Length:', certificateData?.length);
+
+    if (!certificateData) {
+      console.log('No certificate data provided');
+      return null;
+    }
+
+    // Check if this is the logo filename instead of certificate data
+    if (certificateData.includes('Logo.png') || certificateData.includes('logo')) {
+      console.error('Certificate field contains logo filename instead of certificate data');
+      return null;
+    }
+
+    // If it's already a data URL
+    if (certificateData.startsWith('data:')) {
+      console.log('Certificate is already a data URL');
+      return certificateData;
+    }
+
+    // If it's a base64 string without data URL prefix
+    if (certificateData.length > 100) { // Likely base64 data
+      console.log('Certificate appears to be base64 data, adding data URL prefix');
+
+      // Validate base64 format
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(certificateData)) {
+        console.error('Invalid base64 format detected');
+        return null;
+      }
+
+      // Try to detect the actual image type from the data
+      let mimeType = 'image/jpeg'; // default
+      if (certificateData.startsWith('/9j/') || certificateData.startsWith('/9j/')) {
+        mimeType = 'image/jpeg';
+      } else if (certificateData.startsWith('iVBORw0KGgo')) {
+        mimeType = 'image/png';
+      } else if (certificateData.startsWith('JVBERi0')) {
+        mimeType = 'application/pdf';
+      }
+
+      console.log('Detected MIME type:', mimeType);
+      const dataUrl = `data:${mimeType};base64,${certificateData}`;
+      console.log('Generated data URL length:', dataUrl.length);
+      return dataUrl;
+    }
+
+    // If it's a filename or URL
+    console.log('Certificate appears to be a filename/URL');
+    return certificateData;
+  };
+
+  const handleDownloadCertificate = (certificateData) => {
+    try {
+      const src = getCertificateSrc(certificateData);
+      if (!src) {
+        showNotification('Cannot download: Invalid certificate data', 'error');
+        return;
+      }
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = src;
+
+      // Determine file extension based on MIME type
+      let extension = 'jpg';
+      if (src.includes('image/png')) extension = 'png';
+      else if (src.includes('application/pdf')) extension = 'pdf';
+      else if (src.includes('image/jpeg')) extension = 'jpg';
+
+      // Set filename
+      const filename = `certificate_${selectedRequest.SchoolRequestID}_${selectedRequest.PrincipalName}.${extension}`;
+      link.download = filename;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showNotification('Certificate downloaded successfully!', 'success');
+    } catch (error) {
+      console.error('Error downloading certificate:', error);
+      showNotification('Failed to download certificate', 'error');
+    }
+  };
+
+  const handleViewCertificateFullscreen = (certificateData) => {
+    try {
+      const src = getCertificateSrc(certificateData);
+      if (!src) {
+        showNotification('Cannot view: Invalid certificate data', 'error');
+        return;
+      }
+
+      // Show fullscreen modal
+      setShowFullscreenModal(true);
+    } catch (error) {
+      console.error('Error opening certificate:', error);
+      showNotification('Failed to open certificate', 'error');
+    }
   };
 
   const confirmReject = async () => {
@@ -244,40 +369,56 @@ export default function AdminRequestPage() {
                 </div>
 
                 {/* Card Actions */}
-                {req.Status === 'pending' && (
-                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
-                    <button
-                      onClick={() => handleApprove(req._id)}
-                      className={`flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${actionLoading[req._id] === 'approve' ? 'cursor-wait' : ''}`}
-                      disabled={!!actionLoading[req._id]}
-                      aria-busy={actionLoading[req._id] === 'approve'}
-                    >
-                      {actionLoading[req._id] === 'approve' ? (
-                        <span className="loader mr-2"></span>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(req._id)}
-                      className={`flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${actionLoading[req._id] === 'reject' ? 'cursor-wait' : ''}`}
-                      disabled={!!actionLoading[req._id]}
-                      aria-busy={actionLoading[req._id] === 'reject'}
-                    >
-                      {actionLoading[req._id] === 'reject' ? (
-                        <span className="loader mr-2"></span>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                      Reject
-                    </button>
-                  </div>
-                )}
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col gap-3">
+                  {/* View Certificate Button - Always visible */}
+                  <button
+                    onClick={() => handleViewCertificate(req)}
+                    className="w-full bg-[#0091d9] hover:bg-[#0091d9]/80 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                    disabled={!req.Certificate}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {req.Certificate ? 'View Certificate' : 'No Certificate'}
+                  </button>
+
+                  {/* Approve/Reject Buttons - Only for pending requests */}
+                  {req.Status === 'pending' && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleApprove(req._id)}
+                        className={`flex-1 bg-green-600/50 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${actionLoading[req._id] === 'approve' ? 'cursor-wait' : ''}`}
+                        disabled={!!actionLoading[req._id]}
+                        aria-busy={actionLoading[req._id] === 'approve'}
+                      >
+                        {actionLoading[req._id] === 'approve' ? (
+                          <span className="loader mr-2"></span>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(req._id)}
+                        className={`flex-1 bg-red-600/50 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${actionLoading[req._id] === 'reject' ? 'cursor-wait' : ''}`}
+                        disabled={!!actionLoading[req._id]}
+                        aria-busy={actionLoading[req._id] === 'reject'}
+                      >
+                        {actionLoading[req._id] === 'reject' ? (
+                          <span className="loader mr-2"></span>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -329,6 +470,126 @@ export default function AdminRequestPage() {
                     Reject Request
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
+        {/* Certificate Modal */}
+        {showFullscreenModal && selectedRequest && (
+          <div className="fixed inset-0 bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden">
+              {/* Modal Header */}
+              <div className="absolute top-0 left-0 right-0 bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between z-20">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">School Certificate</h3>
+                    <p className="text-sm text-gray-600">{selectedRequest.PrincipalName} - {selectedRequest.SchoolRequestID}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowFullscreenModal(false);
+                    setSelectedRequest(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Certificate content */}
+              <div className="w-full h-full overflow-auto">
+                {selectedRequest.Certificate && getCertificateSrc(selectedRequest.Certificate) ? (
+                  <>
+                    {/* Download button - only show if certificate is valid */}
+                    <button
+                      onClick={() => {
+                        handleDownloadCertificate(selectedRequest.Certificate);
+                        setShowFullscreenModal(false);
+                      }}
+                      className="absolute top-24 right-6 text-white hover:text-gray-300 transition-colors z-20 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md flex items-center gap-2 shadow-lg"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Download
+                    </button>
+
+                    {/* Certificate display */}
+                    {getCertificateSrc(selectedRequest.Certificate)?.includes('application/pdf') ? (
+                      <iframe
+                        src={getCertificateSrc(selectedRequest.Certificate)}
+                        className="w-full h-full"
+                        title="Certificate PDF"
+                      />
+                    ) : (
+                      <img
+                        src={getCertificateSrc(selectedRequest.Certificate)}
+                        alt="School Certificate"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          console.error('Fullscreen certificate failed to load:', e);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
+
+                    {/* School info overlay */}
+                    <div className="absolute bottom-6 left-6 bg-black bg-opacity-75 text-white p-4 rounded-lg shadow-lg">
+                      <p className="text-sm">
+                        <strong>School:</strong> {selectedRequest.SchoolRequestID}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Principal:</strong> {selectedRequest.PrincipalName}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  /* Error state for invalid certificate */
+                  <div className="text-center text-white w-full h-full flex flex-col items-center justify-center">
+                    <div className="mx-auto h-24 w-24 text-gray-400 mb-6">
+                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-medium mb-4">
+                      {selectedRequest.Certificate
+                        ? (selectedRequest.Certificate.includes('Logo.png') || selectedRequest.Certificate.includes('logo'))
+                          ? 'Certificate Field Contains Logo Data'
+                          : 'Invalid Certificate Data'
+                        : 'No Certificate Available'
+                      }
+                    </h3>
+                    <p className="text-gray-300 max-w-md mx-auto">
+                      {selectedRequest.Certificate
+                        ? (selectedRequest.Certificate.includes('Logo.png') || selectedRequest.Certificate.includes('logo'))
+                          ? 'The certificate field contains logo data instead of the actual certificate. This appears to be a data mapping issue.'
+                          : 'The certificate data appears to be corrupted or in an invalid format.'
+                        : 'This school request does not have a certificate uploaded.'
+                      }
+                    </p>
+                    {selectedRequest.Certificate && (
+                      <div className="mt-6 p-4 bg-red-900 bg-opacity-50 border border-red-700 rounded-lg max-w-md mx-auto">
+                        <p className="text-sm text-red-200">
+                          <strong>Debug Info:</strong><br />
+                          Type: {typeof selectedRequest.Certificate}<br />
+                          Length: {selectedRequest.Certificate?.length || 0}<br />
+                          Preview: {selectedRequest.Certificate?.substring(0, 50)}...
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import schoolfundLogo from "../images/logoskl.jpg";
+import Footer from "../components/Footer";
 
 export default function SchoolProfileDashboard() {
   const [school, setSchool] = useState(null);
@@ -12,6 +13,7 @@ export default function SchoolProfileDashboard() {
   });
   const [topDonors, setTopDonors] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [deletingCampaign, setDeletingCampaign] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +47,52 @@ export default function SchoolProfileDashboard() {
   const schoolInitial = schoolName[0] || "S";
   const schoolLogoSrc = school?.SchoolLogo ? school.SchoolLogo : schoolfundLogo;
 
+  const deleteCampaign = async (campaignId) => {
+    if (!school?.SchoolRequestID) {
+      alert("School information not found");
+      return;
+    }
+
+    // Find the campaign to check if it has donations
+    const campaign = campaigns.find(c => c._id === campaignId);
+    if (campaign && campaign.raised > 0) {
+      alert("Cannot delete campaigns that have received donations. Please contact support if you need to modify this campaign.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this campaign? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingCampaign(campaignId);
+    
+    try {
+      const response = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/${campaignId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          schoolID: school.SchoolRequestID
+        })
+      });
+
+      if (response.ok) {
+        // Remove the campaign from the local state
+        setCampaigns(prevCampaigns => prevCampaigns.filter(c => c._id !== campaignId));
+        alert("Campaign deleted successfully");
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Failed to delete campaign");
+      }
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      alert("Failed to delete campaign. Please try again.");
+    } finally {
+      setDeletingCampaign(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Navigation */}
@@ -57,9 +105,9 @@ export default function SchoolProfileDashboard() {
             <a href="#" className="flex items-center text-blue-600">
               Dashboard
             </a>
-            <a href="#" className="text-gray-700 hover:text-blue-600" onClick={e => { e.preventDefault(); navigate('/school-create-campaign'); }}>Create Campaigns</a>
+            {/* <a href="#" className="text-gray-700 hover:text-blue-600" onClick={e => { e.preventDefault(); navigate('/school-create-campaign'); }}>Create Campaigns</a>
             <a href="#" className="text-gray-700 hover:text-blue-600">Manage Expenses</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600">Generate Reports</a>
+            <a href="#" className="text-gray-700 hover:text-blue-600">Generate Reports</a> */}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -89,7 +137,7 @@ export default function SchoolProfileDashboard() {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          {/* <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-3xl font-bold text-blue-700">Rs.{stats.totalDonations.toLocaleString()}</span>
@@ -101,7 +149,7 @@ export default function SchoolProfileDashboard() {
                 </svg>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="flex items-center justify-between">
@@ -117,7 +165,7 @@ export default function SchoolProfileDashboard() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          {/* <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-3xl font-bold text-blue-700">Rs.{stats.monthlyDonations.toLocaleString()}</span>
@@ -129,9 +177,9 @@ export default function SchoolProfileDashboard() {
                 </svg>
               </div>
             </div>
-          </div>
+          </div> */}
 
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          {/* <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-3xl font-bold text-blue-700">Rs.{stats.pendingExpenses.toLocaleString()}</span>
@@ -143,11 +191,11 @@ export default function SchoolProfileDashboard() {
                 </svg>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Analytics and Top Donors */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-6 md:col-span-2 border border-gray-200 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center mb-4">
 
@@ -191,7 +239,7 @@ export default function SchoolProfileDashboard() {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Active Campaigns and Recent Expenses */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -237,6 +285,42 @@ export default function SchoolProfileDashboard() {
                       <div className="text-gray-600 text-sm font-medium">
                         Rs {(c.raised || 0).toLocaleString()} raised of Rs.{(c.amount || 0).toLocaleString()}
                       </div>
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={() => deleteCampaign(c._id)}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-200 flex items-center gap-1 ${
+                            (c.raised || 0) > 0 
+                              ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                              : 'bg-red-500 text-white hover:bg-red-600'
+                          }`}
+                          disabled={deletingCampaign === c._id || (c.raised || 0) > 0}
+                          title={(c.raised || 0) > 0 ? "Cannot delete campaigns with donations" : "Delete campaign"}
+                        >
+                          {deletingCampaign === c._id ? (
+                            <>
+                              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Deleting...
+                            </>
+                          ) : (c.raised || 0) > 0 ? (
+                            <>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Locked
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   );
                 })
@@ -252,7 +336,7 @@ export default function SchoolProfileDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
+          {/* <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center mb-6">
 
               <h3 className="text-xl font-bold text-gray-800">Recent Expenses</h3>
@@ -282,49 +366,11 @@ export default function SchoolProfileDashboard() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-[#18104B] to-[#2d1b6b] text-white py-12 px-4 mt-auto">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
-          <div>
-            <div className="font-bold mb-3 text-lg">Connecting donors with schools</div>
-            <div className="mb-3 text-gray-300">In need to create better educational opportunities for all students.</div>
-          </div>
-          <div>
-            <div className="font-bold mb-3 text-lg">Quick Links</div>
-            <ul className="space-y-2 text-gray-300">
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Browse Campaigns</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Start a Campaign</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">How it works</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Success Stories</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">About Us</li>
-            </ul>
-          </div>
-          <div>
-            <div className="font-bold mb-3 text-lg">Resources</div>
-            <ul className="space-y-2 text-gray-300">
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Help Center</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Blog</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Contact Support</li>
-              <li className="hover:text-white transition-colors duration-200 cursor-pointer">Donation Policy</li>
-            </ul>
-          </div>
-          <div>
-            <div className="font-bold mb-3 text-lg">Contact Us</div>
-            <div className="space-y-2 text-gray-300">
-              <div>123 Kottawa, Athurugiriya Road, Pannipitiya</div>
-              <div>support@schoolfundraising.org</div>
-              <div>+94 112 889 844</div>
-            </div>
-          </div>
-        </div>
-        <div className="text-center text-xs text-gray-400 mt-8 pt-6 border-t border-gray-700">
-          2023 School Fundraising Platform. All rights reserved. | Privacy Policy | Terms Of Service | Cookie Policy
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 } 

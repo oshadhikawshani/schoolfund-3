@@ -7,7 +7,7 @@ const Footer = () => {
                 <div>
                     <div className="font-bold mb-2">Connecting donors with schools</div>
                     <div className="mb-2">In need to create better educational opportunities for all students.</div>
-                    
+
                 </div>
                 <div>
                     <div className="font-bold mb-2">Quick Links</div>
@@ -34,10 +34,10 @@ const Footer = () => {
                     <div>support@schoolfundraising.org</div>
                     <div>+94 112 889 844</div>
                     {/* <div className="mt-2">Secure Payment Methods</div> */}
-                    
+
                 </div>
             </div>
-            <div className="text-center text-xs text-gray-300 mt-6">2023 School Fundraising Platform. All rights reserved. | Privacy Policy | Terms Of Service | Cookie Policy</div>
+            <div className="text-center text-xs text-gray-300 mt-6">2025 School Fundraising Platform. All rights reserved. | Privacy Policy | Terms Of Service | Cookie Policy</div>
         </footer>
     )
 }

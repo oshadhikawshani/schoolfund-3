@@ -58,6 +58,38 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Delete a campaign
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { schoolID } = req.body; // School ID to verify ownership
+    
+    if (!schoolID) {
+      return res.status(400).json({ message: 'School ID is required' });
+    }
+    
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      return res.status(404).json({ message: 'Campaign not found' });
+    }
+    
+    // Verify that the campaign belongs to the requesting school
+    if (campaign.schoolID !== schoolID) {
+      return res.status(403).json({ message: 'Unauthorized: Campaign does not belong to this school' });
+    }
+    
+    // Only allow deletion of campaigns that are not yet approved or are in pending status
+    if (campaign.status === 'approved' && campaign.raised > 0) {
+      return res.status(400).json({ message: 'Cannot delete approved campaigns with donations' });
+    }
+    
+    await Campaign.findByIdAndDelete(id);
+    res.json({ message: 'Campaign deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // List all campaigns for a school (any status)
 router.get('/school/:schoolID', async (req, res) => {
   try {

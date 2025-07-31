@@ -64,14 +64,14 @@ export default function SchoolCreateCampaign() {
   const handleImageToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       if (!file) return resolve("");
-      
+
       // Check file size (5MB limit)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
         reject(new Error("File size must be less than 5MB"));
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = reject;
@@ -82,7 +82,7 @@ export default function SchoolCreateCampaign() {
   // Monetary form submit
   const handleSubmitM = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!titleM.trim()) {
       setMessageM("Please fill in the campaign title.");
@@ -104,7 +104,7 @@ export default function SchoolCreateCampaign() {
       setMessageM("Please select a deadline.");
       return;
     }
-    
+
     setSubmittingM(true);
     setMessageM("");
     try {
@@ -142,7 +142,7 @@ export default function SchoolCreateCampaign() {
   // Non-Monetary form submit
   const handleSubmitN = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!titleN.trim()) {
       setMessageN("Please fill in the campaign title.");
@@ -164,7 +164,7 @@ export default function SchoolCreateCampaign() {
       setMessageN("Please select a deadline.");
       return;
     }
-    
+
     setSubmittingN(true);
     setMessageN("");
     try {
@@ -210,22 +210,31 @@ export default function SchoolCreateCampaign() {
         {/* Menu */}
         <div className="flex-1 flex justify-center">
           <ul className="flex gap-8 items-center text-base font-medium">
-            <li className="text-black cursor-pointer hover:text-blue-600">Dashboard</li>
+            <li 
+              className="text-black cursor-pointer hover:text-blue-600"
+              onClick={() => {
+                if (window.confirm("Are you sure you want to go to Dashboard?")) {
+                  navigate("/school-main");
+                }
+              }}
+            >
+              Dashboard
+            </li>
             <li className="text-blue-600 cursor-pointer font-semibold">Create Campaigns</li>
-            <li className="text-black cursor-pointer hover:text-blue-600">Manage Expenses</li>
-            <li className="text-black cursor-pointer hover:text-blue-600">Generate Reports</li>
+            {/* <li className="text-black cursor-pointer hover:text-blue-600">Manage Expenses</li>
+            <li className="text-black cursor-pointer hover:text-blue-600">Generate Reports</li> */}
           </ul>
         </div>
         {/* Right icons */}
         <div className="flex items-center gap-6">
           {/* Bell icon */}
-          <span className="inline-flex items-center justify-center">
+          {/* <span className="inline-flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-          </span>
+          </span> */}
           {/* User icon and info */}
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <span className="inline-flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="currentColor" viewBox="0 0 24 24">
                 <circle cx="12" cy="8" r="4" />
@@ -236,7 +245,7 @@ export default function SchoolCreateCampaign() {
               <span className="text-sm font-medium text-black">{schoolUsername}</span>
               <span className="text-xs text-gray-400">Administrator</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </nav>
       {/* Toggle */}
