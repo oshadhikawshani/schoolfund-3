@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import logo from "../images/logoskl.jpg";
 import landingBg from "../images/landing-bg.jpg";
 import BackButton from "../components/BackButton";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +16,7 @@ export default function LoginPage() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSchoolLogin = async (e) => {
@@ -74,22 +78,20 @@ export default function LoginPage() {
   const handleDonorLogin = async (e) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true);
+
     try {
-      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include"
+      const res = await axios.post(`${API}/api/donors/login`, { email, password }, {
+        withCredentials: true,
       });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        navigate("/dashboard");
-      } else {
-        setMessage(data.message || "Login failed");
-      }
+      localStorage.setItem("donorToken", res.data.token);
+      localStorage.setItem("donorData", JSON.stringify(res.data.donor));
+      setMessage("Login successful. Redirecting…");
+      setTimeout(() => navigate("/donor-dashboard"), 700);
     } catch (err) {
-      setMessage("Server error. Please try again later.");
+      setMessage(err?.response?.data?.error || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -228,19 +230,20 @@ export default function LoginPage() {
             >
               Login as School
             </button>
-            {/* <button
+            <button
               type="submit"
               onClick={handleDonorLogin}
-              className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+              disabled={loading}
+              className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-70"
               style={{
                 backgroundColor: '#0091d9',
                 '--tw-ring-color': '#0091d9'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#007bb8'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#0091d9'}
+              onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#007bb8')}
+              onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#0091d9')}
             >
-              Login as Donor
-            </button> */}
+              {loading ? "Signing in…" : "Login as Donor"}
+            </button>
           </div>
         </form>
 
@@ -252,7 +255,7 @@ export default function LoginPage() {
               Click here
             </Link>
           </p>
-          {/* <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600">
             Check school request status?{" "}
             <button
               onClick={() => {
@@ -265,7 +268,7 @@ export default function LoginPage() {
             >
               Click here
             </button>
-          </p> */}
+          </p>
           {/* <p className="text-sm text-gray-600">
             Don't have an account?{" "}
             <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">

@@ -30,7 +30,10 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-app.use(express.json());
+
+// Increase body size limits for large image uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Test route
 app.get('/', (req, res) => {
@@ -49,6 +52,18 @@ app.use('/api/campaigns', campaignRoutes);
 
 const principalRoutes = require('./routes/principalRoutes');
 app.use('/api/principal', principalRoutes);
+
+const donorRoutes = require('./routes/donorRoutes');
+app.use('/api/donors', donorRoutes);
+
+const donationRoutes = require('./routes/donationRoutes');
+app.use('/api/donations', donationRoutes);
+
+const webhookRoutes = require('./routes/webhooks');
+app.use('/api/webhooks', webhookRoutes);
+
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payments', paymentRoutes);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

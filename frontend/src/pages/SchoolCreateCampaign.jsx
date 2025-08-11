@@ -72,10 +72,47 @@ export default function SchoolCreateCampaign() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      // Compress image if it's larger than 1MB
+      if (file.size > 1024 * 1024) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Calculate new dimensions (max 800px width/height)
+          const maxDimension = 800;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = URL.createObjectURL(file);
+      } else {
+        // For smaller images, use original
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      }
     });
   };
 
@@ -126,6 +163,12 @@ export default function SchoolCreateCampaign() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      
+      if (res.status === 413) {
+        setMessageM("Image file is too large. Please use a smaller image (under 5MB).");
+        return;
+      }
+      
       const data = await res.json();
       if (res.ok) {
         setMessageM("Campaign created!");
@@ -134,7 +177,11 @@ export default function SchoolCreateCampaign() {
         setMessageM(data.message || "Failed to create campaign.");
       }
     } catch (err) {
-      setMessageM("Error: " + err.message);
+      if (err.message.includes("File size must be less than 5MB")) {
+        setMessageM("Please select a smaller image file (under 5MB).");
+      } else {
+        setMessageM("Error: " + err.message);
+      }
     }
     setSubmittingM(false);
   };
@@ -186,6 +233,12 @@ export default function SchoolCreateCampaign() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      
+      if (res.status === 413) {
+        setMessageN("Image file is too large. Please use a smaller image (under 5MB).");
+        return;
+      }
+      
       const data = await res.json();
       if (res.ok) {
         setMessageN("Campaign created!");
@@ -194,7 +247,11 @@ export default function SchoolCreateCampaign() {
         setMessageN(data.message || "Failed to create campaign.");
       }
     } catch (err) {
-      setMessageN("Error: " + err.message);
+      if (err.message.includes("File size must be less than 5MB")) {
+        setMessageN("Please select a smaller image file (under 5MB).");
+      } else {
+        setMessageN("Error: " + err.message);
+      }
     }
     setSubmittingN(false);
   };

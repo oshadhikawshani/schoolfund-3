@@ -9,14 +9,33 @@ const { sendPrincipalCredentialsEmail } = require('../utils/emailService');
 router.post('/', async (req, res) => {
   try {
     const { campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType } = req.body;
+    
+    // Validate required fields
     if (!campaignID || !campaignName || !description || !amount || !schoolID || !categoryID || !deadline || !monetaryType) {
       return res.status(400).json({ message: 'All required fields must be provided' });
     }
+    
+    // Validate image size if provided
+    if (image && typeof image === 'string') {
+      // Base64 images are about 33% larger than the original file
+      const base64Size = image.length * 0.75; // Approximate size in bytes
+      const maxSize = 10 * 1024 * 1024; // 10MB limit
+      
+      if (base64Size > maxSize) {
+        return res.status(413).json({ 
+          message: 'Image file is too large. Please use an image smaller than 7MB.',
+          maxSize: '7MB',
+          currentSize: `${(base64Size / 1024 / 1024).toFixed(2)}MB`
+        });
+      }
+    }
+    
     // Check if school exists and is approved
     const school = await SchoolRequest.findOne({ SchoolRequestID: schoolID, Status: 'approved' });
     if (!school) {
       return res.status(400).json({ message: 'Invalid or unapproved schoolID' });
     }
+    
     // Approval logic
     let status = 'approved';
     let principalCredentials = null;
@@ -54,6 +73,10 @@ router.post('/', async (req, res) => {
     }
     res.status(201).json({ message: 'Campaign created successfully', campaign, principalCredentials });
   } catch (err) {
+    console.error('Campaign creation error:', err);
+    if (err.name === 'PayloadTooLargeError') {
+      return res.status(413).json({ message: 'Request payload too large. Please reduce image size.' });
+    }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
@@ -106,6 +129,19 @@ router.get('/', async (req, res) => {
   try {
     const campaigns = await Campaign.find();
     res.json(campaigns);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get campaign by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign) {
+      return res.status(404).json({ message: 'Campaign not found' });
+    }
+    res.json(campaign);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
