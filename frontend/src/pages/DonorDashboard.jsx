@@ -185,12 +185,28 @@ const DonorDashboard = () => {
               <img src="/logo.svg" alt="School Fund Logo" className="h-10 w-auto" />
               <span className="text-xl font-bold text-gray-900">School Fund</span>
             </div>
-            <nav className="flex space-x-6">
-              <Link to="/donor/browseCampaigns" className="text-gray-900 hover:text-gray-600 transition-colors">Browse Campaigns</Link>
-              <Link to="/my-donations" className="text-blue-600 font-medium">My Donations</Link>
-              <Link to="/donor-dashboard" className="text-gray-900 hover:text-gray-600 transition-colors">Dashboard</Link>
-              <Link to="/logout" className="text-gray-900 hover:text-gray-600 transition-colors">Logout</Link>
+            <nav className="flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
+              <a href="donor/browseCampaigns" className="text-gray-600 hover:text-gray-900">Browse Campaigns</a>
+              <a href="#" className="text-gray-600 hover:text-gray-900">My Donations</a>
+              <a href="/donor-dashboard" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">My Dashboard</a>
             </nav>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  // Clear donor token and redirect to login
+                  localStorage.removeItem('donorToken');
+                  navigate('/');
+                }}
+                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors duration-200"
+              >
+                <div className="w-10 h-10 bg-[#0091d9] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium hidden sm:block">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -201,9 +217,9 @@ const DonorDashboard = () => {
         <section className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back, Donor!</h1>
-            <div className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-medium flex items-center space-x-2">
+            <div className="bg-[#e7deb6] text-yellow-900 px-4 py-2 rounded-full font-medium flex items-center space-x-2">
               <span>{donorStats.totalDonations >= 10 ? 'Gold Donor' : donorStats.totalDonations >= 5 ? 'Silver Donor' : 'Bronze Donor'}</span>
-              <span className="text-yellow-600">⭐⭐</span>
+
             </div>
           </div>
 
@@ -290,7 +306,7 @@ const DonorDashboard = () => {
         </section>
 
         {/* Call to Action Section */}
-        <section className="bg-blue-600 rounded-lg p-8 text-white">
+        <section className="bg-[#0091d9] rounded-lg p-8 text-white">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Make a Bigger Impact?</h2>
             <p className="text-lg text-blue-100 mb-8 max-w-3xl mx-auto">
@@ -299,13 +315,13 @@ const DonorDashboard = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/donor/browseCampaigns"
-                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors border-2 border-white"
+                className="bg-white text-[#0091d9] px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors border-2 border-white"
               >
                 Donate Again
               </Link>
               <Link
                 to="/donor/browseCampaigns"
-                className="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-[#0091d9] transition-colors"
               >
                 Browse More Campaigns
               </Link>
