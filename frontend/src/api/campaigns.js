@@ -18,4 +18,14 @@ export const fetchCampaignById = async (id) => {
     console.error('Error fetching campaign:', error);
     throw error;
   }
+};
+
+export const fetchCategories = async () => {
+  try {
+    const response = await api.get('/api/campaigns/categories');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    throw error;
+  }
 }; 

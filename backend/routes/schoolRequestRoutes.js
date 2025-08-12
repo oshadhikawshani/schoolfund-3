@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const SchoolRequest = require('../models/SchoolRequest');
 const Principal = require('../models/Principal');
 const { sendRegistrationEmail, sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
@@ -42,6 +43,7 @@ router.get('/', async (req, res) => {
     const requests = await SchoolRequest.find();
     console.log('All school requests:', requests.map(req => ({
       _id: req._id,
+      SchoolRequestID: req.SchoolRequestID,
       Username: req.Username,
       Status: req.Status,
       PrincipalName: req.PrincipalName
@@ -49,6 +51,34 @@ router.get('/', async (req, res) => {
     res.json(requests);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Test endpoint to check database connection and collection
+router.get('/test-db', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const dbName = mongoose.connection.name;
+    const collectionName = SchoolRequest.collection.name;
+    
+    console.log('Database test:', {
+      connectionState: dbState,
+      databaseName: dbName,
+      collectionName: collectionName
+    });
+    
+    const count = await SchoolRequest.countDocuments();
+    console.log('Total documents in collection:', count);
+    
+    res.json({
+      connectionState: dbState,
+      databaseName: dbName,
+      collectionName: collectionName,
+      documentCount: count
+    });
+  } catch (err) {
+    console.error('Database test error:', err);
+    res.status(500).json({ message: 'Database test failed', error: err.message });
   }
 });
 
@@ -90,6 +120,81 @@ router.get('/status', async (req, res) => {
     res.json(request);
   } catch (err) {
     console.error('Error in status query route:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get school information by schoolID
+router.get('/school/:schoolID', async (req, res) => {
+  try {
+    const { schoolID } = req.params;
+    console.log('Looking for school with schoolID:', schoolID);
+    
+    // Check database connection
+    const dbState = mongoose.connection.readyState;
+    console.log('Database connection state:', dbState, '(0=disconnected, 1=connected, 2=connecting, 3=disconnecting)');
+    
+    // First, let's check if there are any schools in the database
+    const allSchools = await SchoolRequest.find({});
+    console.log('Total schools found in database:', allSchools.length);
+    console.log('All schools in database:', allSchools.map(s => ({ 
+      _id: s._id,
+      SchoolRequestID: s.SchoolRequestID, 
+      Username: s.Username,
+      Status: s.Status 
+    })));
+    
+    // Try exact match first
+    let school = await SchoolRequest.findOne({ SchoolRequestID: schoolID });
+    console.log('Exact match result for schoolID:', schoolID, ':', school ? 'Found' : 'Not found');
+    
+    // If not found, try case-insensitive search
+    if (!school) {
+      school = await SchoolRequest.findOne({ 
+        SchoolRequestID: { $regex: new RegExp(`^${schoolID}$`, 'i') } 
+      });
+      console.log('Case-insensitive match result for schoolID:', schoolID, ':', school ? 'Found' : 'Not found');
+    }
+    
+    // If still not found, try trimmed search
+    if (!school) {
+      const trimmedSchoolID = schoolID.trim();
+      school = await SchoolRequest.findOne({ SchoolRequestID: trimmedSchoolID });
+      console.log('Trimmed match result for schoolID:', trimmedSchoolID, ':', school ? 'Found' : 'Not found');
+    }
+    
+    // If still not found, let's try to find any school with similar SchoolRequestID
+    if (!school) {
+      const similarSchools = await SchoolRequest.find({ 
+        SchoolRequestID: { $regex: schoolID, $options: 'i' } 
+      });
+      console.log('Similar schools found:', similarSchools.map(s => s.SchoolRequestID));
+    }
+    
+    if (!school) {
+      console.log('School not found for schoolID:', schoolID);
+      return res.status(404).json({ message: 'School not found' });
+    }
+    
+    console.log('School found:', {
+      _id: school._id,
+      SchoolRequestID: school.SchoolRequestID,
+      Username: school.Username,
+      Address: school.Address,
+      Status: school.Status
+    });
+    
+    res.json({
+      schoolID: school.SchoolRequestID,
+      schoolName: school.Username,
+      location: school.Address,
+      principalName: school.PrincipalName,
+      email: school.Email,
+      contactNumber: school.ContactNumber,
+      status: school.Status
+    });
+  } catch (err) {
+    console.error('Error fetching school by schoolID:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

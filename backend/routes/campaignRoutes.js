@@ -4,6 +4,7 @@ const SchoolRequest = require('../models/SchoolRequest');
 const router = express.Router();
 const crypto = require('crypto');
 const { sendPrincipalCredentialsEmail } = require('../utils/emailService');
+const { isValidCategoryId, categories } = require('../config/categories');
 
 // Create a new campaign
 router.post('/', async (req, res) => {
@@ -13,6 +14,14 @@ router.post('/', async (req, res) => {
     // Validate required fields
     if (!campaignID || !campaignName || !description || !amount || !schoolID || !categoryID || !deadline || !monetaryType) {
       return res.status(400).json({ message: 'All required fields must be provided' });
+    }
+    
+    // Validate category ID
+    if (!isValidCategoryId(categoryID)) {
+      return res.status(400).json({ 
+        message: 'Invalid category ID provided',
+        validCategories: categories.map(cat => ({ id: cat.id, name: cat.name }))
+      });
     }
     
     // Validate image size if provided
@@ -124,10 +133,34 @@ router.get('/school/:schoolID', async (req, res) => {
   }
 });
 
-// List all campaigns (admin)
+// List campaigns with optional filters
+// Supported query params:
+// - type: 'monetary' | 'non-monetary' (maps to Campaign.monetaryType)
+// - categories: comma-separated list (currently not mapped; reserved for future use)
 router.get('/', async (req, res) => {
   try {
-    const campaigns = await Campaign.find();
+    const { type } = req.query;
+    console.log('Received query params:', req.query); // Debug
+
+    const filter = {};
+
+    // Always filter by approved status
+    filter.status = 'approved';
+
+    if (typeof type === 'string' && type.trim() !== '') {
+      const normalized = type.trim().toLowerCase();
+      console.log('Normalized type:', normalized); // Debug
+      if (normalized === 'monetary') {
+        filter.monetaryType = 'Monetary';
+      } else if (normalized === 'non-monetary') {
+        filter.monetaryType = 'Non-Monetary';
+      }
+    }
+
+    console.log('Final filter:', filter); // Debug
+    const campaigns = await Campaign.find(filter);
+    console.log('Found campaigns count:', campaigns.length); // Debug
+    console.log('Campaign types found:', campaigns.map(c => ({ id: c._id, name: c.campaignName, type: c.monetaryType, status: c.status }))); // Debug
     res.json(campaigns);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -207,6 +240,15 @@ router.get('/principal-dashboard/:schoolID', async (req, res) => {
     const { schoolID } = req.params;
     const campaigns = await Campaign.find({ schoolID, status: 'principal_pending' });
     res.json(campaigns);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get available categories
+router.get('/categories', (req, res) => {
+  try {
+    res.json(categories);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from '../images/logoskl.jpg';
-
-const categories = [
-  { id: "cat1", name: "Infrastructure" },
-  { id: "cat2", name: "Books & Supplies" },
-  { id: "cat3", name: "Health & Nutrition" },
-  { id: "cat4", name: "Events" },
-];
+import api from '../lib/api';
+import { categories } from '../config/categories';
 
 export default function SchoolCreateCampaign() {
   const [selectedType, setSelectedType] = useState("Monetary");
@@ -43,8 +38,8 @@ export default function SchoolCreateCampaign() {
     async function fetchCampaigns() {
       if (!schoolID) return;
       try {
-        const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolID}`);
-        const data = await res.json();
+        const res = await api.get(`/api/campaigns/school/${schoolID}`);
+        const data = res.data;
         setCampaigns(Array.isArray(data) ? data : []);
       } catch (err) {
         setCampaigns([]);
@@ -158,23 +153,16 @@ export default function SchoolCreateCampaign() {
         deadline: deadlineM,
         monetaryType: "Monetary",
       };
-      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      if (res.status === 413) {
-        setMessageM("Image file is too large. Please use a smaller image (under 5MB).");
-        return;
-      }
-      
-      const data = await res.json();
-      if (res.ok) {
+      try {
+        await api.post('/api/campaigns', payload);
         setMessageM("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
-      } else {
-        setMessageM(data.message || "Failed to create campaign.");
+      } catch (error) {
+        if (error.response?.status === 413) {
+          setMessageM("Image file is too large. Please use a smaller image (under 5MB).");
+          return;
+        }
+        setMessageM(error.response?.data?.message || "Failed to create campaign.");
       }
     } catch (err) {
       if (err.message.includes("File size must be less than 5MB")) {
@@ -228,23 +216,16 @@ export default function SchoolCreateCampaign() {
         deadline: deadlineN,
         monetaryType: "Non-Monetary",
       };
-      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      if (res.status === 413) {
-        setMessageN("Image file is too large. Please use a smaller image (under 5MB).");
-        return;
-      }
-      
-      const data = await res.json();
-      if (res.ok) {
+      try {
+        await api.post('/api/campaigns', payload);
         setMessageN("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
-      } else {
-        setMessageN(data.message || "Failed to create campaign.");
+      } catch (error) {
+        if (error.response?.status === 413) {
+          setMessageN("Image file is too large. Please use a smaller image (under 5MB).");
+          return;
+        }
+        setMessageN(error.response?.data?.message || "Failed to create campaign.");
       }
     } catch (err) {
       if (err.message.includes("File size must be less than 5MB")) {

@@ -188,7 +188,7 @@ const DonorDashboard = () => {
             <nav className="flex space-x-6">
               <Link to="/donor/browseCampaigns" className="text-gray-900 hover:text-gray-600 transition-colors">Browse Campaigns</Link>
               <Link to="/my-donations" className="text-blue-600 font-medium">My Donations</Link>
-              <Link to="/dashboard" className="text-gray-900 hover:text-gray-600 transition-colors">Dashboard</Link>
+              <Link to="/donor-dashboard" className="text-gray-900 hover:text-gray-600 transition-colors">Dashboard</Link>
               <Link to="/logout" className="text-gray-900 hover:text-gray-600 transition-colors">Logout</Link>
             </nav>
           </div>

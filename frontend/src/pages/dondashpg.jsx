@@ -3,15 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import logoskl from "../images/logoskl.jpg";
 import BackButton from "../components/BackButton";
 import { fetchCampaigns } from "../api/campaigns";
+import { categories } from "../config/categories";
 
-const categories = [
-  "Books & Education",
-  "School Meals",
-  "Sanitation",
-  "Sports Equipment",
-  "Technology",
-  "Infrastructure",
-];
+const categoryNames = categories.map(cat => cat.name);
 
 const times = ["Urgent (<7 days)", "This Month", "Long-term"];
 
@@ -286,7 +280,7 @@ export default function DonorCampaignDashboard() {
                 <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
                   CATEGORIES
                 </p>
-                {categories.map((cat, idx) => (
+                {categoryNames.map((cat, idx) => (
                   <label key={idx} className="flex items-center mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200">
                     <input
                       type="checkbox"

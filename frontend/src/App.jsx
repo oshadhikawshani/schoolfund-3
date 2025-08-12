@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // Pages
 import LoginPage from "./pages/loginpage";
 import RegPage from "./pages/regpage";
-import BrowseCampaigns from "./pages/dondashpg";
+// import BrowseCampaigns from "./pages/dondashpg";
 import DonHistoryTA from "./pages/donhistoryta";
 import SchoolAccountForm from "./pages/sklreqpg";
 import AdminRequestPage from "./pages/adminreqpg";
@@ -19,7 +19,7 @@ import DonorRegister from './pages/DonorRegister';
 
 import DonorDashboard from './pages/DonorDashboard.jsx'
 
-// import BrowseCampaigns from "./pages/BrowseCampaigns";
+import BrowseCampaigns from "./pages/BrowseCampaigns";
 import MonetaryDonationPage from "./pages/MonetaryDonationPage";
 import NonMonetaryDonationPage from "./pages/NonMonetaryDonationPage";
 
