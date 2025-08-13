@@ -46,7 +46,7 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
 
     // Create donation record
     const donationData = {
-      donorID: req.user.id,
+      donorID: req.user.donorID, // Use donorID from JWT token
       campaignID,
       amount: numericAmount,
       visibility: visLabel,
@@ -121,31 +121,16 @@ router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req,
 // ---------------- Donor history ----------------
 router.get("/history", verifyDonorAuth, async (req, res) => {
   try {
-    // Use donorID if available, otherwise fallback to id
-    let donorIdentifier = req.user.donorID;
+    // Use donorID from JWT token as the primary identifier for querying donations
+    const donorIdentifier = req.user.donorID;
+    
+    console.log("Fetching history for donor:", { 
+      donorID: donorIdentifier, 
+      userId: req.user.id,
+      token: req.headers.authorization ? req.headers.authorization.substring(0, 30) + '...' : 'No token'
+    });
 
-    // If donorID is not available in JWT, try to fetch it from the database
-    if (!donorIdentifier) {
-      try {
-        const Donor = require("../models/Donor");
-        const donor = await Donor.findById(req.user.id);
-        if (donor) {
-          donorIdentifier = donor.DonorID;
-          console.log("Fetched donorID from database for history:", donorIdentifier);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch donorID from database for history:", err.message);
-      }
-    }
-
-    // Fallback to user.id if donorID is still not available
-    if (!donorIdentifier) {
-      donorIdentifier = req.user.id;
-      console.warn("Using user.id as fallback for donorID in history:", donorIdentifier);
-    }
-
-    console.log("Fetching history for donor:", { donorID: donorIdentifier, userId: req.user.id });
-
+    // Search for donations using donorID (string format)
     const monetary = await MonetaryDonation.find({ donorID: donorIdentifier })
       .sort({ createdAt: -1 })
       .lean();
@@ -282,30 +267,14 @@ router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
     console.log("Test: Verifying donation flow for user:", req.user);
 
     // Test 1: Check if we can find the user's donations
-    let donorIdentifier = req.user.donorID;
-
-    if (!donorIdentifier) {
-      try {
-        const Donor = require("../models/Donor");
-        const donor = await Donor.findById(req.user.id);
-        if (donor) {
-          donorIdentifier = donor.DonorID;
-        }
-      } catch (err) {
-        console.warn("Failed to fetch donorID in test:", err.message);
-      }
-    }
-
-    if (!donorIdentifier) {
-      donorIdentifier = req.user.id;
-    }
+    const donorIdentifier = req.user.donorID;
 
     // Test 2: Try to find donations
     const donations = await MonetaryDonation.find({ donorID: donorIdentifier }).lean();
 
     // Test 3: Check if we can create a test donation (without saving)
     const testDonationData = {
-      donorID: donorIdentifier,
+      donorID: req.user.donorID,
       campaignID: new require("mongoose").Types.ObjectId(), // Dummy campaign ID
       amount: 100,
       visibility: "Public",
@@ -325,6 +294,22 @@ router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
     });
   } catch (e) {
     console.error("Test error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+// ---------------- Debug endpoint to check current user ----------------
+router.get("/debug/current-user", verifyDonorAuth, async (req, res) => {
+  try {
+    console.log("Debug: Current user info:", req.user);
+    
+    return res.json({
+      success: true,
+      user: req.user,
+      token: req.headers.authorization ? req.headers.authorization.substring(0, 30) + '...' : 'No token'
+    });
+  } catch (e) {
+    console.error("Debug error:", e);
     return res.status(500).json({ message: e.message });
   }
 });

@@ -41,6 +41,11 @@ api.interceptors.request.use((config) => {
     console.log("Available localStorage keys:", Object.keys(localStorage));
   }
   
+  // Add cache-busting headers to prevent browser caching
+  config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+  config.headers['Pragma'] = 'no-cache';
+  config.headers['Expires'] = '0';
+  
   return config;
 });
 

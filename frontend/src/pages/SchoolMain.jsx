@@ -45,8 +45,20 @@ export default function SchoolMain() {
   }, [schoolData]);
 
   const handleLogout = () => {
-    localStorage.removeItem("schoolData");
-    localStorage.removeItem("schoolToken");
+    // Clear all authentication tokens and data
+    localStorage.removeItem('donorToken');
+    localStorage.removeItem('donorData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('schoolToken');
+    localStorage.removeItem('principalToken');
+    localStorage.removeItem('schoolData');
+    localStorage.removeItem('principalData');
+    localStorage.removeItem('schoolRequestEmail');
+    // Clear any cached data
+    localStorage.removeItem('campaigns');
+    localStorage.removeItem('stats');
+    localStorage.removeItem('topDonors');
+    localStorage.removeItem('expenses');
     navigate("/");
   };
 

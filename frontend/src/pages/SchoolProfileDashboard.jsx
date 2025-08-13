@@ -93,6 +93,25 @@ export default function SchoolProfileDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear all authentication tokens and data
+    localStorage.removeItem('donorToken');
+    localStorage.removeItem('donorData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('schoolToken');
+    localStorage.removeItem('principalToken');
+    localStorage.removeItem('schoolData');
+    localStorage.removeItem('principalData');
+    localStorage.removeItem('schoolRequestEmail');
+    // Clear any cached data
+    localStorage.removeItem('campaigns');
+    localStorage.removeItem('stats');
+    localStorage.removeItem('topDonors');
+    localStorage.removeItem('expenses');
+    // Redirect to home page
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Navigation */}
@@ -117,6 +136,12 @@ export default function SchoolProfileDashboard() {
             alt="School Logo"
             className="w-10 h-10 bg-gray-300 rounded-full object-cover"
           />
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 transform"
+          >
+            Logout
+          </button>
         </div>
       </header>
 

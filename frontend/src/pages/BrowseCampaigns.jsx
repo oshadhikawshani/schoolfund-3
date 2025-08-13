@@ -270,8 +270,21 @@ export default function BrowseCampaigns() {
             <div className="relative">
               <button
                 onClick={() => {
-                  // Clear donor token and redirect to login
+                  // Clear all authentication tokens and data
                   localStorage.removeItem('donorToken');
+                  localStorage.removeItem('donorData');
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('schoolToken');
+                  localStorage.removeItem('principalToken');
+                  localStorage.removeItem('schoolData');
+                  localStorage.removeItem('principalData');
+                  localStorage.removeItem('schoolRequestEmail');
+                  // Clear any cached data
+                  localStorage.removeItem('campaigns');
+                  localStorage.removeItem('stats');
+                  localStorage.removeItem('topDonors');
+                  localStorage.removeItem('expenses');
+                  // Redirect to home page
                   navigate('/');
                 }}
                 className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors duration-200"

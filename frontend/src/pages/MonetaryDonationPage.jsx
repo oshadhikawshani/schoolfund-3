@@ -62,8 +62,16 @@ export default function MonetaryDonationPage() {
         withCredentials: true,
       });
 
-      // Redirect to Stripe
-      window.location.href = "https://donate.stripe.com/test_cNi6oGcEG1c5fzmeuhgEg00";
+      console.log('Donation created successfully:', donationData);
+
+      // Store donation ID in session storage for reference
+      if (donationData.donationId) {
+        sessionStorage.setItem('lastDonationId', donationData.donationId);
+      }
+
+      // Redirect to Stripe with donation metadata
+      const stripeUrl = `https://donate.stripe.com/test_cNi6oGcEG1c5fzmeuhgEg00?client_reference_id=${donationData.donationId || 'donation'}`;
+      window.location.href = stripeUrl;
     } catch (e) {
       const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "❌ Error. Please try again.";
       setNote(errorMsg);

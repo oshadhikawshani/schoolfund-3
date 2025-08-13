@@ -20,7 +20,7 @@ export default function PaymentSuccess() {
           {/* Action Buttons */}
           <div className="space-y-3">
             <Link 
-              to="/donor-dashboard" 
+              to="/donor-dashboard?payment=success" 
               className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
             >
               Go to Dashboard

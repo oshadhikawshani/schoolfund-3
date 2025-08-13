@@ -81,6 +81,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Clear any existing tokens first
+      localStorage.removeItem("donorToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("schoolToken");
+      localStorage.removeItem("principalToken");
+      
       const res = await axios.post(`${API}/api/donors/login`, { email, password }, {
         withCredentials: true,
       });
@@ -269,12 +275,12 @@ export default function LoginPage() {
               Click here
             </button>
           </p>
-          {/* <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600">
             Don't have an account?{" "}
             <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
               Sign up as Donor
             </Link>
-          </p> */}
+          </p>
         </div>
       </div>
     </div>
