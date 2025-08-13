@@ -420,7 +420,7 @@ export default function DonorCampaignDashboard() {
                             </div>
                             
                             <button
-                              onClick={() => navigate(`/donor/donate/${c._id}`)}
+                              onClick={() => window.open('https://donate.stripe.com/test_cNi6oGcEG1c5fzmeuhgEg00', '_blank')}
                               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 font-semibold"
                             >
                               Donate Now

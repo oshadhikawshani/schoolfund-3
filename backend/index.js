@@ -66,11 +66,15 @@ const paymentRoutes = require('./routes/paymentRoutes');
 app.use('/api/payments', paymentRoutes);
 
 // MongoDB connection
+console.log('Connecting to MongoDB with URI:', process.env.MONGO_URI ? 'URI exists' : 'MONGO_URI is missing');
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log('MongoDB connected'))
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    console.log('Database name:', mongoose.connection.db.databaseName);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Start server

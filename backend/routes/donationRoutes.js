@@ -1,5 +1,6 @@
 // backend/routes/donationRoutes.js
 const express = require("express");
+const mongoose = require("mongoose");
 const Stripe = require("stripe");
 const multer = require("multer");
 const path = require("path");
@@ -14,18 +15,23 @@ const router = express.Router();
 const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripe = new Stripe(stripeSecret);
 
-// -------- Monetary donation: create checkout session --------
+// -------- Monetary donation: create donation record --------
 router.post("/monetary", verifyDonorAuth, async (req, res) => {
   try {
+    console.log("Donation request received:", req.body);
+    console.log("User:", req.user);
+
     const { campaignID, amount, anonymous, visibility, message, paymentMethod } = req.body;
 
     // Basic validation
     if (!campaignID || amount == null) {
+      console.log("Validation failed: missing campaignID or amount");
       return res.status(400).json({ message: "campaignID and amount required" });
     }
 
     const numericAmount = Math.round(Number(amount));
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      console.log("Validation failed: invalid amount", amount);
       return res.status(400).json({ message: "Invalid amount" });
     }
 
@@ -33,97 +39,44 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
       typeof anonymous === "boolean"
         ? anonymous
         : typeof visibility === "string"
-        ? visibility.toLowerCase() === "anonymous"
-        : false;
+          ? visibility.toLowerCase() === "anonymous"
+          : false;
 
     const visLabel = isAnon ? "Anonymous" : "Public";
 
-    const FRONTEND = process.env.CLIENT_URL || process.env.APP_URL || "http://localhost:5173";
-    if (!/^https?:\/\//i.test(FRONTEND)) {
-      return res.status(500).json({ message: "CLIENT_URL/APP_URL must be an absolute http(s) URL" });
-    }
-    if (!stripeSecret) {
-      return res.status(500).json({ message: "STRIPE_SECRET_KEY is missing" });
-    }
-
-    // Currency: default to USD for dev/testing; set STRIPE_CURRENCY=lkr if your account supports it
-    const CURRENCY = (process.env.STRIPE_CURRENCY || "usd").toLowerCase();
-
-    // 1) Create pending donation record
-    let donorIdentifier = req.user.donorID;
-    
-    // If donorID is not available in JWT, try to fetch it from the database
-    if (!donorIdentifier) {
-      try {
-        const Donor = require("../models/Donor");
-        const donor = await Donor.findById(req.user.id);
-        if (donor) {
-          donorIdentifier = donor.DonorID;
-          console.log("Fetched donorID from database:", donorIdentifier);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch donorID from database:", err.message);
-      }
-    }
-    
-    // Fallback to user.id if donorID is still not available
-    if (!donorIdentifier) {
-      donorIdentifier = req.user.id;
-      console.warn("Using user.id as fallback for donorID:", donorIdentifier);
-    }
-    
+    // Create donation record
     const donationData = {
-      donorID: donorIdentifier,
+      donorID: req.user.id,
       campaignID,
       amount: numericAmount,
       visibility: visLabel,
       status: "pending",
-      // optional: store the donor's message in the donation if your schema supports it
-      // message,
+      message: message || undefined,
     };
-    
+
     console.log("Creating donation with data:", donationData);
-    
+    console.log("Database name:", mongoose.connection.db.databaseName);
+
     const donation = await MonetaryDonation.create(donationData);
+    console.log("Donation created successfully:", donation._id);
+    console.log("Collection name:", donation.constructor.collection.name);
 
-    // 2) Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: CURRENCY,
-            product_data: {
-              name: "SchoolFund+ Donation",
-              // description is optional; omit if you don't want to show the donor message at Stripe
-              description: message || undefined,
-            },
-            unit_amount: numericAmount * 100, // minor units
-          },
-          quantity: 1,
-        },
-      ],
-      // match your React routes: /donation/success and /donation/cancel
-      success_url: `${FRONTEND}/donation/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${FRONTEND}/donation/cancel`,
-      metadata: {
-        monetaryID: String(donation._id),
-        donorId: String(req.user.id),
-        visibility: visLabel,
-      },
-    });
-
-    // 3) Save session id for later verification/webhook matching
-    donation.stripeSessionId = session.id;
-    await donation.save();
-
-    return res.json({ url: session.url });
+    return res.json({ success: true });
   } catch (e) {
-    const msg = e?.raw?.message || e.message || "Stripe session error";
-    console.error("Stripe session create error:", msg, e);
-    return res.status(500).json({ message: "Stripe session error", detail: msg });
+    console.error("Error creating donation:", e);
+    console.error("Error details:", {
+      message: e.message,
+      stack: e.stack,
+      name: e.name
+    });
+    return res.status(500).json({
+      message: "Error creating donation",
+      error: e.message
+    });
   }
 });
+
+
 
 // ---------------- Non‑monetary with photo (single file "photo") ----------------
 const uploadDir = "uploads";
@@ -170,7 +123,7 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
   try {
     // Use donorID if available, otherwise fallback to id
     let donorIdentifier = req.user.donorID;
-    
+
     // If donorID is not available in JWT, try to fetch it from the database
     if (!donorIdentifier) {
       try {
@@ -184,15 +137,15 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
         console.warn("Failed to fetch donorID from database for history:", err.message);
       }
     }
-    
+
     // Fallback to user.id if donorID is still not available
     if (!donorIdentifier) {
       donorIdentifier = req.user.id;
       console.warn("Using user.id as fallback for donorID in history:", donorIdentifier);
     }
-    
+
     console.log("Fetching history for donor:", { donorID: donorIdentifier, userId: req.user.id });
-    
+
     const monetary = await MonetaryDonation.find({ donorID: donorIdentifier })
       .sort({ createdAt: -1 })
       .lean();
@@ -213,13 +166,13 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
         createdAt: d.createdAt,
         payment: pay
           ? {
-              transactionID: pay.transactionID,
-              amountPaid: pay.amountPaid,
-              method: pay.method,
-              paidAt: pay.paidAt,
-              receiptURL: pay.receiptURL,
-              paymentStatus: pay.paymentStatus,
-            }
+            transactionID: pay.transactionID,
+            amountPaid: pay.amountPaid,
+            method: pay.method,
+            paidAt: pay.paidAt,
+            receiptURL: pay.receiptURL,
+            paymentStatus: pay.paymentStatus,
+          }
           : null,
       };
     });
@@ -235,27 +188,27 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
 router.get("/debug/donations", verifyDonorAuth, async (req, res) => {
   try {
     console.log("Debug: Checking donation data for user:", req.user);
-    
+
     // Check all donations for this user
     const allDonations = await MonetaryDonation.find().lean();
     console.log("Total donations in database:", allDonations.length);
-    
+
     // Check donations with different donorID formats
     const donationsWithStringID = allDonations.filter(d => typeof d.donorID === 'string' && d.donorID.startsWith('DONOR_'));
     const donationsWithObjectID = allDonations.filter(d => typeof d.donorID === 'object' || (typeof d.donorID === 'string' && d.donorID.length === 24));
-    
+
     console.log("Donations with string ID (DONOR_*):", donationsWithStringID.length);
     console.log("Donations with ObjectID:", donationsWithObjectID.length);
-    
+
     // Check user's specific donations
-    const userDonations = allDonations.filter(d => 
-      d.donorID === req.user.donorID || 
+    const userDonations = allDonations.filter(d =>
+      d.donorID === req.user.donorID ||
       d.donorID === req.user.id ||
       String(d.donorID) === String(req.user.id)
     );
-    
+
     console.log("User's donations found:", userDonations.length);
-    
+
     return res.json({
       totalDonations: allDonations.length,
       stringIDDonations: donationsWithStringID.length,
@@ -277,19 +230,19 @@ router.get("/debug/donations", verifyDonorAuth, async (req, res) => {
 router.post("/migrate/donations", verifyDonorAuth, async (req, res) => {
   try {
     console.log("Migration: Starting donation data migration for user:", req.user);
-    
+
     const Donor = require("../models/Donor");
-    
+
     // Find all donations that need migration (those with ObjectId donorID)
     const donationsToMigrate = await MonetaryDonation.find({
       donorID: { $type: "objectId" }
     }).lean();
-    
+
     console.log("Donations to migrate:", donationsToMigrate.length);
-    
+
     let migratedCount = 0;
     let errors = [];
-    
+
     for (const donation of donationsToMigrate) {
       try {
         // Find the donor by MongoDB _id to get the DonorID string
@@ -308,9 +261,9 @@ router.post("/migrate/donations", verifyDonorAuth, async (req, res) => {
         errors.push(`Failed to migrate donation ${donation._id}: ${err.message}`);
       }
     }
-    
+
     console.log(`Migration completed. Migrated: ${migratedCount}, Errors: ${errors.length}`);
-    
+
     return res.json({
       success: true,
       migratedCount,
@@ -327,10 +280,10 @@ router.post("/migrate/donations", verifyDonorAuth, async (req, res) => {
 router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
   try {
     console.log("Test: Verifying donation flow for user:", req.user);
-    
+
     // Test 1: Check if we can find the user's donations
     let donorIdentifier = req.user.donorID;
-    
+
     if (!donorIdentifier) {
       try {
         const Donor = require("../models/Donor");
@@ -342,14 +295,14 @@ router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
         console.warn("Failed to fetch donorID in test:", err.message);
       }
     }
-    
+
     if (!donorIdentifier) {
       donorIdentifier = req.user.id;
     }
-    
+
     // Test 2: Try to find donations
     const donations = await MonetaryDonation.find({ donorID: donorIdentifier }).lean();
-    
+
     // Test 3: Check if we can create a test donation (without saving)
     const testDonationData = {
       donorID: donorIdentifier,
@@ -358,7 +311,7 @@ router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
       visibility: "Public",
       status: "pending"
     };
-    
+
     return res.json({
       success: true,
       userInfo: {

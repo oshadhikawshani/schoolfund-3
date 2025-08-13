@@ -7,6 +7,7 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Webhook for checkout sessions (existing functionality)
 router.post("/stripe", async (req, res) => {
   let event;
 
@@ -54,5 +55,7 @@ router.post("/stripe", async (req, res) => {
     res.status(500).json({ error: "webhook-failed" });
   }
 });
+
+
 
 module.exports = router;

@@ -7,7 +7,9 @@ const schema = new mongoose.Schema(
     amount: { type: Number, required: true },
     visibility: { type: String, enum: ["Public", "Anonymous"], default: "Public" },
     status: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
-    stripeSessionId: String,
+    message: String, // Store donor's message
+    stripeSessionId: String, // Keep for backward compatibility
+    stripeReference: String, // New field for tracking donations
   },
   { timestamps: true }
 );
