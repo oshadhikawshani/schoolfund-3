@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
-export function verifySchoolAuth(req, res, next) {
+function verifySchoolAuth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -15,3 +15,5 @@ export function verifySchoolAuth(req, res, next) {
     return res.status(401).json({ error: "Invalid token" });
   }
 }
+
+module.exports = { verifySchoolAuth };

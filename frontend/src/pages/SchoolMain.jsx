@@ -8,6 +8,7 @@ import disabilitiesdash from "../images/disabilitiesdash.jpg";
 import healthcheckdash from "../images/healthcheckdash.jpg";
 import BackButton from "../components/BackButton";
 import Footer from "../components/Footer";
+ 
 
 
 export default function SchoolMain() {
@@ -42,6 +43,21 @@ export default function SchoolMain() {
       }
     }
     fetchCampaigns();
+
+    const onFocus = () => fetchCampaigns();
+    window.addEventListener('focus', onFocus);
+
+    const onStorage = (e) => {
+      if (e.key === 'donationCompletedAt') {
+        fetchCampaigns();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [schoolData]);
 
   const handleLogout = () => {
@@ -496,6 +512,8 @@ export default function SchoolMain() {
             </div>
           </div>
         </div>
+
+        
 
         {/* Quick Actions */}
       </main>

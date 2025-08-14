@@ -112,5 +112,45 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// GET /api/donors/profile - Get donor profile details
+router.get("/profile", async (req, res) => {
+  try {
+    // Get token from request
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.token;
+    
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    // Verify token
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev");
+    const donorID = payload.donorID;
+
+    if (!donorID) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // Get donor details
+    const donorDetail = await DonorDetail.findOne({ DonorID: donorID });
+    
+    if (!donorDetail) {
+      return res.status(404).json({ error: "Donor details not found" });
+    }
+
+    res.json({
+      success: true,
+      donor: {
+        name: donorDetail.Name,
+        email: donorDetail.Email,
+        phoneNumber: donorDetail.PhoneNumber,
+        donorID: donorDetail.DonorID
+      }
+    });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
 

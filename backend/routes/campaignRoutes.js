@@ -9,10 +9,12 @@ const { isValidCategoryId, categories } = require('../config/categories');
 // Create a new campaign
 router.post('/', async (req, res) => {
   try {
-    const { campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType } = req.body;
+    console.log('Received campaign creation request:', req.body);
+    const { campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, allowDonorUpdates } = req.body;
     
     // Validate required fields
     if (!campaignID || !campaignName || !description || !amount || !schoolID || !categoryID || !deadline || !monetaryType) {
+      console.log('Missing required fields:', { campaignID, campaignName, description, amount, schoolID, categoryID, deadline, monetaryType });
       return res.status(400).json({ message: 'All required fields must be provided' });
     }
     
@@ -40,10 +42,13 @@ router.post('/', async (req, res) => {
     }
     
     // Check if school exists and is approved
+    console.log('Looking for school with ID:', schoolID);
     const school = await SchoolRequest.findOne({ SchoolRequestID: schoolID, Status: 'approved' });
     if (!school) {
+      console.log('School not found or not approved:', schoolID);
       return res.status(400).json({ message: 'Invalid or unapproved schoolID' });
     }
+    console.log('School found:', school.SchoolRequestID, school.Username);
     
     // Approval logic
     let status = 'approved';
@@ -68,7 +73,7 @@ router.post('/', async (req, res) => {
       } else {
         principalCredentials = { username: school.principalUsername, password: school.principalPassword };
       }
-      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status });
+      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status, allowDonorUpdates });
       await campaign.save();
       // Send principal credentials email
       try {
@@ -77,7 +82,7 @@ router.post('/', async (req, res) => {
         console.error('Failed to send principal credentials email:', emailErr);
       }
     } else {
-      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status });
+      campaign = new Campaign({ campaignID, campaignName, description, amount, image, schoolID, categoryID, deadline, monetaryType, status, allowDonorUpdates });
       await campaign.save();
     }
     res.status(201).json({ message: 'Campaign created successfully', campaign, principalCredentials });

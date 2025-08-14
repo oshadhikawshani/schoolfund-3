@@ -20,7 +20,8 @@ const campaignSchema = new mongoose.Schema({
   },
   monetaryType: { type: String, enum: ['Monetary', 'Non-Monetary'], required: true },
   status: { type: String, enum: ['pending', 'approved', 'principal_pending', 'rejected'], default: 'pending' },
-  deadline: { type: Date, required: true }
+  deadline: { type: Date, required: true },
+  allowDonorUpdates: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Campaign', campaignSchema, 'campaigns'); 

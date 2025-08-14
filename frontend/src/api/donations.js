@@ -43,4 +43,15 @@ export const checkCurrentUser = async () => {
     console.error('Error checking current user:', error);
     throw error;
   }
+};
+
+// Function to fetch donor details
+export const fetchDonorDetails = async () => {
+  try {
+    const response = await api.get('/api/donors/profile');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching donor details:', error);
+    throw error;
+  }
 }; 

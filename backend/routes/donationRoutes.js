@@ -44,13 +44,13 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
 
     const visLabel = isAnon ? "Anonymous" : "Public";
 
-    // Create donation record
+    // Create donation record as immediately paid
     const donationData = {
       donorID: req.user.donorID, // Use donorID from JWT token
       campaignID,
       amount: numericAmount,
       visibility: visLabel,
-      status: "pending",
+      status: "paid",
       message: message || undefined,
     };
 
@@ -61,7 +61,29 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     console.log("Donation created successfully:", donation._id);
     console.log("Collection name:", donation.constructor.collection.name);
 
-    return res.json({ success: true });
+    // Create a corresponding successful payment record
+    let payment = null;
+    try {
+      const txId = `INSTANT_${donation._id}_${Date.now()}`;
+      payment = await Payment.create({
+        monetaryID: donation._id,
+        method: paymentMethod || "manual",
+        amountPaid: numericAmount,
+        transactionID: txId,
+        // paymentStatus defaults to "Success"
+      });
+      console.log("Payment created successfully:", payment._id);
+    } catch (payErr) {
+      console.error("Failed to create Payment record for donation", donation._id, payErr);
+      // Do not fail the request if payment record creation fails
+    }
+
+    return res.json({
+      success: true,
+      donationId: donation._id,
+      status: donation.status,
+      paymentId: payment ? payment._id : null,
+    });
   } catch (e) {
     console.error("Error creating donation:", e);
     console.error("Error details:", {
@@ -96,24 +118,56 @@ const upload = multer({
 
 router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req, res) => {
   try {
+    console.log("Non-monetary donation request received:", req.body);
+    console.log("User:", req.user);
+    console.log("File:", req.file);
+
     const { campaignID, deliveryMethod, deadlineDate, notes, courierRef } = req.body;
 
     if (!campaignID || !deliveryMethod || !req.file) {
+      console.log("Validation failed: missing required fields", { campaignID, deliveryMethod, hasFile: !!req.file });
       return res.status(400).json({ message: "photo, campaignID, deliveryMethod required" });
     }
 
-    // If you later add a NonMonetaryIntent model, persist here and email the school.
-    // For now, just echo back useful info (including the deadline to show the donor).
+    // Import the NonMonetaryDonation model
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+
+    // Create non-monetary donation record
+    const donationData = {
+      donorID: req.user.donorID,
+      campaignID,
+      deliveryMethod,
+      deadlineDate: deadlineDate || null,
+      notes: notes || null,
+      courierRef: courierRef || null,
+      imagePath: req.file.filename,
+      status: "pledged"
+    };
+
+    console.log("Creating non-monetary donation with data:", donationData);
+    console.log("Database name:", mongoose.connection.db.databaseName);
+
+    const donation = await NonMonetaryDonation.create(donationData);
+    console.log("Non-monetary donation created successfully:", donation._id);
+    console.log("Collection name:", donation.constructor.collection.name);
+
     return res.status(201).json({
-      message: "Non-monetary intent received",
+      success: true,
+      message: "Non-monetary donation intent received",
+      donationId: donation._id,
       file: req.file.filename,
-      collectionDeadline: deadlineDate || null, // <-- name matches what donor UI shows
+      collectionDeadline: deadlineDate || null,
       deliveryMethod,
       notes: notes || null,
       courierRef: courierRef || null,
     });
   } catch (e) {
-    console.error(e);
+    console.error("Error creating non-monetary donation:", e);
+    console.error("Error details:", {
+      message: e.message,
+      stack: e.stack,
+      name: e.name
+    });
     return res.status(500).json({ message: e.message });
   }
 });
@@ -162,7 +216,15 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
       };
     });
 
-    return res.json({ monetary: monetaryWithPayment, nonMonetary: [] });
+    // Fetch non-monetary donations
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+    const nonMonetary = await NonMonetaryDonation.find({ donorID: donorIdentifier })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log(`Found ${nonMonetary.length} non-monetary donations for donor ${donorIdentifier}`);
+
+    return res.json({ monetary: monetaryWithPayment, nonMonetary });
   } catch (e) {
     console.error("History error:", e);
     return res.status(500).json({ message: e.message });
@@ -311,6 +373,135 @@ router.get("/debug/current-user", verifyDonorAuth, async (req, res) => {
   } catch (e) {
     console.error("Debug error:", e);
     return res.status(500).json({ message: e.message });
+  }
+});
+
+// ---------------- Debug endpoint to check non-monetary donations ----------------
+router.get("/debug/nonmonetary", verifyDonorAuth, async (req, res) => {
+  try {
+    console.log("Debug: Checking non-monetary donations for user:", req.user);
+
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+    
+    // Check all non-monetary donations
+    const allNonMonetary = await NonMonetaryDonation.find().lean();
+    console.log("Total non-monetary donations in database:", allNonMonetary.length);
+
+    // Check user's specific non-monetary donations
+    const userNonMonetary = await NonMonetaryDonation.find({ donorID: req.user.donorID }).lean();
+    console.log("User's non-monetary donations found:", userNonMonetary.length);
+
+    // Check collection info
+    const collectionName = NonMonetaryDonation.collection.name;
+    console.log("Collection name:", collectionName);
+
+    return res.json({
+      success: true,
+      totalNonMonetary: allNonMonetary.length,
+      userNonMonetary: userNonMonetary.length,
+      collectionName: collectionName,
+      userInfo: {
+        id: req.user.id,
+        donorID: req.user.donorID,
+        role: req.user.role
+      },
+      sampleDonations: allNonMonetary.slice(0, 3) // Show first 3 donations for debugging
+    });
+  } catch (e) {
+    console.error("Debug non-monetary error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+// Test endpoint to verify the route is working
+router.get("/test", (req, res) => {
+  res.json({ message: "Donations API is working!" });
+});
+
+// Public endpoint to get donations for a school's campaigns (no authentication required)
+router.get("/school/:schoolID", async (req, res) => {
+  try {
+    const schoolID = req.params.schoolID;
+    console.log("Fetching donations for school:", schoolID);
+
+    // Import required models
+    const Campaign = require("../models/Campaign");
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+
+    // Get campaigns for this school
+    const campaigns = await Campaign.find({ schoolID }).select("_id campaignName title monetaryType").lean();
+    console.log("Found campaigns for school:", campaigns.length);
+
+    if (campaigns.length === 0) {
+      return res.json({
+        campaigns: [],
+        donations: [],
+        summary: {
+          totalMonetary: 0,
+          totalNonMonetary: 0,
+          totalDonations: 0
+        }
+      });
+    }
+
+    const campaignIds = campaigns.map(c => c._id);
+
+    // Get monetary donations for these campaigns
+    const monetaryDonations = await MonetaryDonation.find({ campaignID: { $in: campaignIds } })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Join payment info to compute effective status for monetary donations
+    const monetaryIds = monetaryDonations.map(d => d._id);
+    const payments = await Payment.find({ monetaryID: { $in: monetaryIds } }).lean();
+    const paymentByMonetaryId = new Map(payments.map(p => [String(p.monetaryID), p]));
+
+    // Get non-monetary donations for these campaigns
+    const nonMonetaryDonations = await NonMonetaryDonation.find({ campaignID: { $in: campaignIds } })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Create a map of campaign names
+    const campaignMap = new Map(campaigns.map(c => [c._id.toString(), c]));
+
+    // Format donations
+    const monetaryWithCampaign = monetaryDonations.map(d => {
+      const pay = paymentByMonetaryId.get(String(d._id));
+      const effectiveStatus = pay && pay.paymentStatus === 'Success' ? 'paid' : d.status;
+      return {
+        ...d,
+        status: effectiveStatus,
+        campaignName: campaignMap.get(d.campaignID.toString())?.campaignName || 'Unknown Campaign',
+        donationType: 'monetary',
+        donorDisplay: d.visibility === "Anonymous" ? "Anonymous" : d.donorID
+      };
+    });
+
+    const nonMonetaryWithCampaign = nonMonetaryDonations.map(d => ({
+      ...d,
+      campaignName: campaignMap.get(d.campaignID.toString())?.campaignName || 'Unknown Campaign',
+      donationType: 'non-monetary',
+      donorDisplay: d.donorID
+    }));
+
+    // Combine and sort by date
+    const allDonations = [...monetaryWithCampaign, ...nonMonetaryWithCampaign]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    console.log("Total donations found:", allDonations.length);
+
+    res.json({
+      campaigns,
+      donations: allDonations,
+      summary: {
+        totalMonetary: monetaryWithCampaign.length,
+        totalNonMonetary: nonMonetaryWithCampaign.length,
+        totalDonations: allDonations.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching school donations:', error);
+    res.status(500).json({ message: 'Failed to fetch donations', error: error.message });
   }
 });
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import schoolfundLogo from "../images/logoskl.jpg";
 import Footer from "../components/Footer";
+import SchoolDonations from "../components/SchoolDonations";
 
 export default function SchoolProfileDashboard() {
   const [school, setSchool] = useState(null);
@@ -21,17 +22,36 @@ export default function SchoolProfileDashboard() {
     const schoolData = JSON.parse(localStorage.getItem("schoolData") || localStorage.getItem("school") || "{}");
     if (schoolData && schoolData.SchoolRequestID) {
       setSchool(schoolData);
-      // Fetch campaigns for this school
-      fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`)
-        .then(res => res.json())
-        .then(data => {
-          setCampaigns(data);
-          localStorage.setItem("campaigns", JSON.stringify(data));
-        })
-        .catch(err => {
-          setCampaigns([]);
-          console.error("Failed to fetch campaigns:", err);
-        });
+
+      const fetchCampaigns = () => {
+        fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`)
+          .then(res => res.json())
+          .then(data => {
+            setCampaigns(data);
+            localStorage.setItem("campaigns", JSON.stringify(data));
+          })
+          .catch(err => {
+            setCampaigns([]);
+            console.error("Failed to fetch campaigns:", err);
+          });
+      };
+
+      fetchCampaigns();
+
+      const onFocus = () => fetchCampaigns();
+      window.addEventListener('focus', onFocus);
+
+      const onStorage = (e) => {
+        if (e.key === 'donationCompletedAt') {
+          fetchCampaigns();
+        }
+      };
+      window.addEventListener('storage', onStorage);
+
+      return () => {
+        window.removeEventListener('focus', onFocus);
+        window.removeEventListener('storage', onStorage);
+      };
     }
     // Adjust keys to match your localStorage structure
     const statsData = JSON.parse(localStorage.getItem("stats"));
@@ -392,6 +412,11 @@ export default function SchoolProfileDashboard() {
               )}
             </div>
           </div> */}
+        </div>
+
+        {/* Donations Received */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 mb-8">
+          <SchoolDonations schoolID={school?.SchoolRequestID} />
         </div>
       </main>
 

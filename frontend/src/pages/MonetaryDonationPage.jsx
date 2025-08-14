@@ -69,9 +69,8 @@ export default function MonetaryDonationPage() {
         sessionStorage.setItem('lastDonationId', donationData.donationId);
       }
 
-      // Redirect to Stripe with donation metadata
-      const stripeUrl = `https://donate.stripe.com/test_cNi6oGcEG1c5fzmeuhgEg00?client_reference_id=${donationData.donationId || 'donation'}`;
-      window.location.href = stripeUrl;
+      // Immediately navigate to success page since donation is completed
+      navigate('/donation/success');
     } catch (e) {
       const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "❌ Error. Please try again.";
       setNote(errorMsg);
@@ -310,17 +309,9 @@ export default function MonetaryDonationPage() {
               {/* Submit Button - Stripe Style */}
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Processing...</span>
-                  </div>
-                ) : (
-                  `Donate Rs. ${Number(amount) || 0}`
-                )}
+                {`Donate Rs. ${Number(amount) || 0}`}
               </button>
 
               {/* Note */}

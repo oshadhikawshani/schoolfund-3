@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import landingBg from "../images/landing-bg.jpg";
 import BackButton from "../components/BackButton";
+ 
 export default function PrincipalDashboard() {
   const navigate = useNavigate();
   const [pendingCampaigns, setPendingCampaigns] = useState([]);
@@ -124,7 +125,7 @@ export default function PrincipalDashboard() {
         )}
 
         {/* Campaigns */}
-        <div className="bg-white bg-opacity-90 rounded-2xl shadow-xl p-8 min-h-[350px]">
+        <div className="bg-white bg-opacity-90 rounded-2xl shadow-xl p-8 min-h-[350px] mb-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-40">
               <svg className="w-10 h-10 text-blue-500 animate-spin mb-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
@@ -183,6 +184,8 @@ export default function PrincipalDashboard() {
             </div>
           )}
         </div>
+
+        
       </div>
     </div>
   );

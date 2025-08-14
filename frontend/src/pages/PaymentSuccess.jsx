@@ -1,7 +1,15 @@
 import { Link } from "react-router-dom";
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function PaymentSuccess() {
+  useEffect(() => {
+    try {
+      localStorage.setItem("donationCompletedAt", String(Date.now()));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 max-w-md w-full">

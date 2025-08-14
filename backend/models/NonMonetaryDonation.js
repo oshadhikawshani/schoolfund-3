@@ -1,14 +1,14 @@
-// backend/models/NonMonetaryDonationIntent.js
+// backend/models/NonMonetaryDonation.js
 const mongoose = require("mongoose");
 
-const NonMonetaryDonationIntentSchema = new mongoose.Schema(
+const NonMonetaryDonationSchema = new mongoose.Schema(
   {
-    donorID: { type: mongoose.Schema.Types.ObjectId, ref: "Donor", required: true },
+    donorID: { type: String, required: true }, // Changed to String to match donorID format
     campaignID: { type: mongoose.Schema.Types.ObjectId, ref: "Campaign", required: true },
     intentDate: { type: Date, default: Date.now },
     deadlineDate: { type: Date }, // optional
     notes: { type: String },
-    deliveryMethod: { type: String, enum: ["handover", "courier"], required: true },
+    deliveryMethod: { type: String, enum: ["handover", "courier", "pickup"], required: true }, // Added "pickup" option
     courierRef: { type: String },
     imagePath: { type: String, required: true },
     status: { type: String, enum: ["pledged", "received", "cancelled"], default: "pledged" },
@@ -16,4 +16,4 @@ const NonMonetaryDonationIntentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("NonMonetaryDonationIntent", NonMonetaryDonationIntentSchema);
+module.exports = mongoose.model("NonMonetaryDonation", NonMonetaryDonationSchema);

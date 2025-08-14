@@ -31,6 +31,9 @@ app.use(cors({
 
 app.use(cookieParser());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Increase body size limits for large image uploads
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -64,6 +67,9 @@ app.use('/api/webhooks', webhookRoutes);
 
 const paymentRoutes = require('./routes/paymentRoutes');
 app.use('/api/payments', paymentRoutes);
+
+const schoolDonationsRoutes = require('./routes/schoolDonations');
+app.use('/api/school-donations', schoolDonationsRoutes);
 
 // MongoDB connection
 console.log('Connecting to MongoDB with URI:', process.env.MONGO_URI ? 'URI exists' : 'MONGO_URI is missing');

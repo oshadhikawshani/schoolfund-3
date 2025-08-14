@@ -33,6 +33,11 @@ export default function SchoolCreateCampaign() {
   const schoolData = JSON.parse(localStorage.getItem("schoolData") || "{}");
   const schoolID = schoolData.SchoolRequestID;
   const schoolUsername = schoolData.Username || "School Username";
+  
+  // Debug logging
+  console.log('School data from localStorage:', schoolData);
+  console.log('School ID:', schoolID);
+  console.log('Available localStorage keys:', Object.keys(localStorage));
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -116,6 +121,10 @@ export default function SchoolCreateCampaign() {
     e.preventDefault();
 
     // Validate required fields
+    if (!schoolID) {
+      setMessageM("School ID not found. Please log in again.");
+      return;
+    }
     if (!titleM.trim()) {
       setMessageM("Please fill in the campaign title.");
       return;
@@ -136,6 +145,10 @@ export default function SchoolCreateCampaign() {
       setMessageM("Please select a deadline.");
       return;
     }
+    if (new Date(deadlineM) <= new Date()) {
+      setMessageM("Deadline must be in the future.");
+      return;
+    }
 
     setSubmittingM(true);
     setMessageM("");
@@ -150,14 +163,19 @@ export default function SchoolCreateCampaign() {
         image: base64Image,
         schoolID,
         categoryID: categoryIDM,
-        deadline: deadlineM,
+        deadline: new Date(deadlineM).toISOString(),
         monetaryType: "Monetary",
+        allowDonorUpdates: allowDonorUpdatesM,
       };
       try {
-        await api.post('/api/campaigns', payload);
+        console.log('Sending payload:', payload);
+        const response = await api.post('/api/campaigns', payload);
+        console.log('Campaign created successfully:', response.data);
         setMessageM("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
       } catch (error) {
+        console.error('Campaign creation error:', error);
+        console.error('Error response:', error.response?.data);
         if (error.response?.status === 413) {
           setMessageM("Image file is too large. Please use a smaller image (under 5MB).");
           return;
@@ -179,6 +197,10 @@ export default function SchoolCreateCampaign() {
     e.preventDefault();
 
     // Validate required fields
+    if (!schoolID) {
+      setMessageN("School ID not found. Please log in again.");
+      return;
+    }
     if (!titleN.trim()) {
       setMessageN("Please fill in the campaign title.");
       return;
@@ -199,6 +221,10 @@ export default function SchoolCreateCampaign() {
       setMessageN("Please select a deadline.");
       return;
     }
+    if (new Date(deadlineN) <= new Date()) {
+      setMessageN("Deadline must be in the future.");
+      return;
+    }
 
     setSubmittingN(true);
     setMessageN("");
@@ -213,14 +239,19 @@ export default function SchoolCreateCampaign() {
         image: base64Image,
         schoolID,
         categoryID: categoryIDN,
-        deadline: deadlineN,
+        deadline: new Date(deadlineN).toISOString(),
         monetaryType: "Non-Monetary",
+        allowDonorUpdates: allowDonorUpdatesN,
       };
       try {
-        await api.post('/api/campaigns', payload);
+        console.log('Sending payload:', payload);
+        const response = await api.post('/api/campaigns', payload);
+        console.log('Campaign created successfully:', response.data);
         setMessageN("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
       } catch (error) {
+        console.error('Campaign creation error:', error);
+        console.error('Error response:', error.response?.data);
         if (error.response?.status === 413) {
           setMessageN("Image file is too large. Please use a smaller image (under 5MB).");
           return;
@@ -414,6 +445,7 @@ export default function SchoolCreateCampaign() {
                     className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
                     value={deadlineM}
                     onChange={e => setDeadlineM(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
@@ -553,6 +585,7 @@ export default function SchoolCreateCampaign() {
                     className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
                     value={deadlineN}
                     onChange={e => setDeadlineN(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">

@@ -121,6 +121,23 @@ export default function BrowseCampaigns() {
   // Load all campaigns on mount
   useEffect(() => {
     loadAllCampaigns();
+
+    // Refresh when window regains focus
+    const onFocus = () => loadAllCampaigns();
+    window.addEventListener('focus', onFocus);
+
+    // Refresh when a donation completes (set in PaymentSuccess)
+    const onStorage = (e) => {
+      if (e.key === 'donationCompletedAt') {
+        loadAllCampaigns();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [loadAllCampaigns]);
 
   // Apply filters to campaigns
@@ -225,7 +242,10 @@ export default function BrowseCampaigns() {
 
   // Calculate progress percentage
   const calculateProgress = (raised, goal) => {
-    return Math.min((raised / goal) * 100, 100);
+    const safeGoal = Number(goal) || 0;
+    const safeRaised = Number(raised) || 0;
+    if (safeGoal <= 0) return 0;
+    return Math.min(Math.round((safeRaised / safeGoal) * 100), 100);
   };
 
   // Calculate days remaining
@@ -444,7 +464,7 @@ export default function BrowseCampaigns() {
                 {/* Campaigns Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
                   {campaigns.map((c) => (
-                    <div key={c._id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+                    <div key={c._id} className={`bg-white rounded-xl shadow-lg border overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full ${c.monetaryType === 'Non-Monetary' ? 'border-green-200 shadow-green-50' : 'border-gray-200'}`}>
                       <div className="relative">
                         <img
                           src={c.image || c.imageUrl || c.banner || FALLBACK}
@@ -470,11 +490,11 @@ export default function BrowseCampaigns() {
                               {schoolsData[c.schoolID].location}
                             </div>
                           )}
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${c.monetaryType === 'Non-Monetary'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-blue-100 text-blue-800'
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${c.monetaryType === 'Non-Monetary'
+                            ? 'bg-green-100 text-green-800 border-green-300'
+                            : 'bg-blue-100 text-blue-800 border-blue-300'
                             }`}>
-                            {c.monetaryType === 'Non-Monetary' ? '📦 Items' : '💰 Money'}
+                            {c.monetaryType === 'Non-Monetary' ? '📦 Physical Items' : '💰 Monetary'}
                           </span>
                         </div>
 
@@ -488,30 +508,50 @@ export default function BrowseCampaigns() {
                         {/* Campaign Progress - Different for Monetary vs Non-Monetary */}
                         {c.monetaryType === 'Non-Monetary' ? (
                           <div className="mb-4">
-                            <div className="text-sm mb-2">
-                              <div className="text-gray-700 font-medium mb-1">📦 Items needed</div>
-                              <div className="text-gray-600 text-xs">Physical donations</div>
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center">
+                                  <span className="text-lg mr-2">📦</span>
+                                  <span className="text-sm font-semibold text-green-800">Items Needed</span>
+                                </div>
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                  {c.quantity || 'Multiple'} items
+                                </span>
+                              </div>
+                              <div className="text-xs text-green-700 mb-2">
+                                {c.itemDescription || c.description?.substring(0, 80) || 'Physical donations needed for this campaign'}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {c.itemType ? (
+                                  <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                                    {c.itemType}
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Books</span>
+                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Supplies</span>
+                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Equipment</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${Math.min((c.raised || 0) / (c.amount || c.goal || 100) * 100, 100)}%` }}
-                              ></div>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              Accepting: Books, Supplies, Equipment, etc.
+                            <div className="flex items-center text-xs text-gray-600">
+                              <svg className="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <span>Drop-off or courier delivery available</span>
                             </div>
                           </div>
                         ) : (
                           <div className="mb-4">
                             <div className="flex justify-between text-sm mb-1">
-                              <span className="text-gray-700">Rs. {c.raised || 8750} raised</span>
-                              <span className="text-gray-600">of Rs. {c.amount || c.goal || 10000} goal</span>
+                              <span className="text-gray-700">Rs. {Number(c.raised || 0).toLocaleString()} raised</span>
+                              <span className="text-gray-600">of Rs. {Number(c.amount || c.goal || 0).toLocaleString()} goal</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
                                 className="bg-[#0091d9] h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${calculateProgress(c.raised || 8750, c.amount || c.goal || 10000)}%` }}
+                                style={{ width: `${calculateProgress(c.raised || 0, c.amount || c.goal || 0)}%` }}
                               ></div>
                             </div>
                           </div>
@@ -527,13 +567,13 @@ export default function BrowseCampaigns() {
 
                         {/* Donate Button - Different text for Non-Monetary */}
                         <button
-                          onClick={() => navigate(`/donor/donate/${c._id}`)}
+                          onClick={() => navigate(c.monetaryType === 'Non-Monetary' ? `/donor/nonmonetary/${c._id}` : `/donor/donate/${c._id}`)}
                           className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto ${c.monetaryType === 'Non-Monetary'
-                            ? 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
+                            ? 'bg-green-600 hover:bg-green-700 text-white border border-green-500'
                             : 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
                             }`}
                         >
-                          {c.monetaryType === 'Non-Monetary' ? 'Donate Items' : 'Donate Now'}
+                          {c.monetaryType === 'Non-Monetary' ? '📦 Donate Physical Items' : '💰 Donate Now'}
                         </button>
                       </div>
                     </div>
