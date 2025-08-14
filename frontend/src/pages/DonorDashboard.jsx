@@ -966,6 +966,15 @@ const DonorDashboard = () => {
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Information</h3>
                       {selectedCampaign ? (
                         <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                          {(() => {
+                            // Normalize campaign fields across different sources
+                            const targetAmount = selectedCampaign.amount || selectedCampaign.targetAmount || selectedCampaign.goal || 0;
+                            const raisedAmount = (selectedCampaign.raised ?? selectedCampaign.raisedAmount ?? 0);
+                            // Attach normalized fields for reuse below via a shallow copy
+                            selectedCampaign.targetAmount = targetAmount;
+                            selectedCampaign.raisedAmount = raisedAmount;
+                            return null;
+                          })()}
                           <div>
                             <h4 className="font-medium text-gray-900 mb-2">{selectedCampaign.campaignName}</h4>
                             <p className="text-sm text-gray-600">{selectedCampaign.description}</p>
@@ -974,11 +983,11 @@ const DonorDashboard = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <span className="text-xs text-gray-500">Target Amount</span>
-                              <p className="font-medium text-gray-900">Rs. {selectedCampaign.targetAmount?.toLocaleString() || 'N/A'}</p>
+                              <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.targetAmount || 0).toLocaleString()}</p>
                             </div>
                             <div>
                               <span className="text-xs text-gray-500">Raised Amount</span>
-                              <p className="font-medium text-gray-900">Rs. {selectedCampaign.raisedAmount?.toLocaleString() || 'N/A'}</p>
+                              <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.raisedAmount || 0).toLocaleString()}</p>
                             </div>
                             <div>
                               <span className="text-xs text-gray-500">Category</span>
@@ -1012,25 +1021,35 @@ const DonorDashboard = () => {
                     </div>
 
                   {/* Progress Bar */}
-                  {selectedCampaign && selectedCampaign.targetAmount && selectedCampaign.raisedAmount && (
+                  {selectedCampaign && (selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal) && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Progress</h3>
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm font-medium text-gray-700">Progress</span>
                           <span className="text-sm text-gray-600">
-                            {Math.round((selectedCampaign.raisedAmount / selectedCampaign.targetAmount) * 100)}%
+                            {(() => {
+                              const raised = Number(selectedCampaign.raisedAmount || selectedCampaign.raised || 0);
+                              const target = Number(selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0);
+                              if (!target || target <= 0) return 0;
+                              return Math.round((raised / target) * 100);
+                            })()}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${Math.min((selectedCampaign.raisedAmount / selectedCampaign.targetAmount) * 100, 100)}%` }}
+                            style={{ width: `${(() => {
+                              const raised = Number(selectedCampaign.raisedAmount || selectedCampaign.raised || 0);
+                              const target = Number(selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0);
+                              if (!target || target <= 0) return 0;
+                              return Math.min((raised / target) * 100, 100);
+                            })()}%` }}
                           ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>Rs. {selectedCampaign.raisedAmount.toLocaleString()}</span>
-                          <span>Rs. {selectedCampaign.targetAmount.toLocaleString()}</span>
+                          <span>Rs. {Number((selectedCampaign.raisedAmount || selectedCampaign.raised || 0)).toLocaleString()}</span>
+                          <span>Rs. {Number((selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0)).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

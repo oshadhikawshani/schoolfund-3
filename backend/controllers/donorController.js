@@ -1,6 +1,7 @@
 const Donor = require('../models/Donor');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const geoip = require('geoip-lite');
 
 exports.register = async (req, res) => {
   try {
@@ -28,8 +29,31 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, donor.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid password' });
 
+    // Capture donor location using IP geolocation
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+    const geo = geoip.lookup(ip);
+    
+    let location = null;
+    if (geo) {
+      location = {
+        city: geo.city || 'Unknown',
+        country: geo.country || 'Unknown',
+        region: geo.region || 'Unknown',
+        lat: geo.ll ? geo.ll[0] : 0,
+        lng: geo.ll ? geo.ll[1] : 0,
+        timezone: geo.timezone || 'Unknown'
+      };
+      
+      // Store location in donor details
+      await DonorDetail.findOneAndUpdate(
+        { DonorID: donor.DonorID },
+        { location: location },
+        { upsert: true, new: true }
+      );
+    }
+
     const token = jwt.sign({ id: donor._id }, process.env.JWT_SECRET);
-    res.json({ token, donor });
+    res.json({ token, donor, location });
   } catch (err) {
     res.status(500).json({ error: 'Login error' });
   }

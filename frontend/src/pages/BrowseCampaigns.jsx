@@ -20,6 +20,7 @@ export default function BrowseCampaigns() {
   const [currentPage, setCurrentPage] = useState(1);
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+  const [donorLocation, setDonorLocation] = useState(null);
 
   const categoryNames = categories.map(cat => cat.name);
 
@@ -46,7 +47,13 @@ export default function BrowseCampaigns() {
         return {
           schoolID: schoolData.schoolID,
           schoolName: schoolData.schoolName,
-          location: schoolData.location,
+          location: {
+            address: schoolData.location || schoolData.address || "Location not available",
+            city: schoolData.city || "Unknown",
+            country: schoolData.country || "Unknown",
+            lat: schoolData.lat || 0,
+            lng: schoolData.lng || 0
+          },
           principalName: schoolData.principalName,
           email: schoolData.email,
           contactNumber: schoolData.contactNumber,
@@ -56,7 +63,13 @@ export default function BrowseCampaigns() {
         return {
           schoolID: schoolID,
           schoolName: `School (${schoolID})`,
-          location: "Location not available",
+          location: {
+            address: "Location not available",
+            city: "Unknown",
+            country: "Unknown",
+            lat: 0,
+            lng: 0
+          },
           principalName: "Unknown",
           email: "N/A",
           contactNumber: "N/A",
@@ -68,7 +81,13 @@ export default function BrowseCampaigns() {
         return {
           schoolID: schoolID,
           schoolName: `Unknown School (${schoolID})`,
-          location: "Location not available",
+          location: {
+            address: "Location not available",
+            city: "Unknown",
+            country: "Unknown",
+            lat: 0,
+            lng: 0
+          },
           principalName: "Unknown",
           email: "N/A",
           contactNumber: "N/A",
@@ -78,7 +97,13 @@ export default function BrowseCampaigns() {
       return {
         schoolID: schoolID,
         schoolName: `School (${schoolID})`,
-        location: "Location not available",
+        location: {
+          address: "Location not available",
+          city: "Unknown",
+          country: "Unknown",
+          lat: 0,
+          lng: 0
+        },
         principalName: "Unknown",
         email: "N/A",
         contactNumber: "N/A",
@@ -140,7 +165,86 @@ export default function BrowseCampaigns() {
     };
   }, [loadAllCampaigns]);
 
-  // Apply filters to campaigns
+  useEffect(() => {
+    // First try to get location from localStorage (from login)
+    const storedLocation = localStorage.getItem('donorLocation');
+    if (storedLocation) {
+      try {
+        const location = JSON.parse(storedLocation);
+        setDonorLocation(location);
+        console.log("Using stored location:", location);
+        return;
+      } catch (err) {
+        console.log("Failed to parse stored location:", err);
+      }
+    }
+
+    // If no stored location, try to fetch from API
+    const fetchDonorLocation = async () => {
+      try {
+        const token = localStorage.getItem('donorToken');
+        if (!token) {
+          console.log('No donor token found, skipping location fetch');
+          return;
+        }
+
+        const response = await api.get('/api/donors/location', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.status === 200 && response.data.location) {
+          setDonorLocation(response.data.location);
+          // Store the fetched location for future use
+          localStorage.setItem('donorLocation', JSON.stringify(response.data.location));
+        } else {
+          console.log('No location data available');
+          // Set a default location or leave as null
+          setDonorLocation({
+            city: "Unknown",
+            country: "Unknown",
+            lat: 0,
+            lng: 0
+          });
+        }
+      } catch (err) {
+        console.log('Failed to fetch donor location, using default:', err.message);
+        // Set a default location on error
+        setDonorLocation({
+          city: "Unknown",
+          country: "Unknown",
+          lat: 0,
+          lng: 0
+        });
+      }
+    };
+    fetchDonorLocation();
+  }, []);
+
+  const sortCampaignsByLocation = (campaigns) => {
+    if (!donorLocation || !donorLocation.lat || !donorLocation.lng) {
+      console.log('No donor location available, skipping location-based sorting');
+      return campaigns;
+    }
+    
+    return campaigns.sort((a, b) => {
+      const schoolA = schoolsData[a.schoolID];
+      const schoolB = schoolsData[b.schoolID];
+      
+      // If school location data is not available, keep original order
+      if (!schoolA?.location?.lat || !schoolA?.location?.lng || 
+          !schoolB?.location?.lat || !schoolB?.location?.lng) {
+        return 0;
+      }
+      
+      const distanceA = calculateDistance(donorLocation, schoolA.location);
+      const distanceB = calculateDistance(donorLocation, schoolB.location);
+      return distanceA - distanceB;
+    });
+  };
+
+  // Apply filters and sort by location
   useEffect(() => {
     let filtered = [...allCampaigns];
 
@@ -202,8 +306,9 @@ export default function BrowseCampaigns() {
       });
     }
 
+    filtered = sortCampaignsByLocation(filtered);
     setCampaigns(filtered);
-  }, [allCampaigns, typeFilter, categoryFilter, timeFilter, searchQuery]);
+  }, [allCampaigns, donorLocation, typeFilter, categoryFilter, timeFilter, searchQuery]);
 
   const handleTypeChange = (value) => {
     setTypeFilter(prev => {
@@ -261,6 +366,24 @@ export default function BrowseCampaigns() {
     // Add newsletter subscription logic here
     alert("Thank you for subscribing to our newsletter!");
     setEmail("");
+  };
+
+  const calculateDistance = (location1, location2) => {
+    // Simple distance calculation - in a real app you might want to use a more accurate formula
+    // or a geolocation library
+    if (!location1.lat || !location1.lng || !location2.lat || !location2.lng) {
+      return Infinity; // Put items without location at the end
+    }
+    
+    const lat1 = parseFloat(location1.lat);
+    const lng1 = parseFloat(location1.lng);
+    const lat2 = parseFloat(location2.lat);
+    const lng2 = parseFloat(location2.lng);
+    
+    // Simple Euclidean distance (not accurate for real-world coordinates but good enough for sorting)
+    return Math.sqrt(
+      Math.pow(lat1 - lat2, 2) + Math.pow(lng1 - lng2, 2)
+    );
   };
 
   return (
@@ -487,7 +610,7 @@ export default function BrowseCampaigns() {
                               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                               </svg>
-                              {schoolsData[c.schoolID].location}
+                              {schoolsData[c.schoolID].location.address}
                             </div>
                           )}
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${c.monetaryType === 'Non-Monetary'
@@ -508,38 +631,15 @@ export default function BrowseCampaigns() {
                         {/* Campaign Progress - Different for Monetary vs Non-Monetary */}
                         {c.monetaryType === 'Non-Monetary' ? (
                           <div className="mb-4">
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center">
-                                  <span className="text-lg mr-2">📦</span>
-                                  <span className="text-sm font-semibold text-green-800">Items Needed</span>
-                                </div>
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                                  {c.quantity || 'Multiple'} items
-                                </span>
-                              </div>
-                              <div className="text-xs text-green-700 mb-2">
-                                {c.itemDescription || c.description?.substring(0, 80) || 'Physical donations needed for this campaign'}
-                              </div>
-                              <div className="flex flex-wrap gap-1">
-                                {c.itemType ? (
-                                  <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-                                    {c.itemType}
-                                  </span>
-                                ) : (
-                                  <>
-                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Books</span>
-                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Supplies</span>
-                                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Equipment</span>
-                                  </>
-                                )}
-                              </div>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-gray-700">{Number(c.itemsReceived || 0).toLocaleString()} items received</span>
+                              <span className="text-gray-600">of {Number(c.amount || 0).toLocaleString()} needed</span>
                             </div>
-                            <div className="flex items-center text-xs text-gray-600">
-                              <svg className="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <span>Drop-off or courier delivery available</span>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${calculateProgress(c.itemsReceived || 0, c.amount || 0)}%` }}
+                              ></div>
                             </div>
                           </div>
                         ) : (
@@ -569,11 +669,11 @@ export default function BrowseCampaigns() {
                         <button
                           onClick={() => navigate(c.monetaryType === 'Non-Monetary' ? `/donor/nonmonetary/${c._id}` : `/donor/donate/${c._id}`)}
                           className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto ${c.monetaryType === 'Non-Monetary'
-                            ? 'bg-green-600 hover:bg-green-700 text-white border border-green-500'
+                            ? 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
                             : 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
                             }`}
                         >
-                          {c.monetaryType === 'Non-Monetary' ? '📦 Donate Physical Items' : '💰 Donate Now'}
+                          {c.monetaryType === 'Non-Monetary' ? '📦 Donate' : '💰 Donate'}
                         </button>
                       </div>
                     </div>

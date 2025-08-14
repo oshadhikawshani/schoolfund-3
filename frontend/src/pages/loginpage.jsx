@@ -90,8 +90,16 @@ export default function LoginPage() {
       const res = await axios.post(`${API}/api/donors/login`, { email, password }, {
         withCredentials: true,
       });
+      
       localStorage.setItem("donorToken", res.data.token);
       localStorage.setItem("donorData", JSON.stringify(res.data.donor));
+      
+      // Store location data if available
+      if (res.data.location) {
+        localStorage.setItem("donorLocation", JSON.stringify(res.data.location));
+        console.log("Donor location stored:", res.data.location);
+      }
+      
       setMessage("Login successful. Redirecting…");
       setTimeout(() => navigate("/donor-dashboard"), 700);
     } catch (err) {

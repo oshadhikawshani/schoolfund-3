@@ -152,5 +152,46 @@ router.get("/profile", async (req, res) => {
   }
 });
 
+// GET /api/donors/location - Get donor location
+router.get('/location', async (req, res) => {
+  try {
+    // Get token from request
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.token;
+    
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    // Verify token
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "dev");
+    const donorID = payload.donorID;
+
+    if (!donorID) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // Get donor details
+    const donorDetail = await DonorDetail.findOne({ DonorID: donorID });
+    
+    if (!donorDetail) {
+      return res.status(404).json({ error: "Donor details not found" });
+    }
+
+    // For now, return a default location or null if not available
+    // In a real implementation, you would store and retrieve actual location data
+    const location = donorDetail.location || {
+      city: "Unknown",
+      country: "Unknown",
+      lat: 0,
+      lng: 0
+    };
+
+    res.json({ location });
+  } catch (error) {
+    console.error('Error fetching donor location:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
 
