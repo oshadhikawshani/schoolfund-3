@@ -30,7 +30,13 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
+// Increase body size limits for large image uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Test route
 app.get('/', (req, res) => {
@@ -50,12 +56,31 @@ app.use('/api/campaigns', campaignRoutes);
 const principalRoutes = require('./routes/principalRoutes');
 app.use('/api/principal', principalRoutes);
 
+const donorRoutes = require('./routes/donorRoutes');
+app.use('/api/donors', donorRoutes);
+
+const donationRoutes = require('./routes/donationRoutes');
+app.use('/api/donations', donationRoutes);
+
+const webhookRoutes = require('./routes/webhooks');
+app.use('/api/webhooks', webhookRoutes);
+
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payments', paymentRoutes);
+
+const schoolDonationsRoutes = require('./routes/schoolDonations');
+app.use('/api/school-donations', schoolDonationsRoutes);
+
 // MongoDB connection
+console.log('Connecting to MongoDB with URI:', process.env.MONGO_URI ? 'URI exists' : 'MONGO_URI is missing');
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log('MongoDB connected'))
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    console.log('Database name:', mongoose.connection.db.databaseName);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Start server

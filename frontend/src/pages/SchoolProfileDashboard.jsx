@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import schoolfundLogo from "../images/logoskl.jpg";
 import Footer from "../components/Footer";
+import SchoolDonations from "../components/SchoolDonations";
 
 export default function SchoolProfileDashboard() {
   const [school, setSchool] = useState(null);
@@ -21,17 +22,36 @@ export default function SchoolProfileDashboard() {
     const schoolData = JSON.parse(localStorage.getItem("schoolData") || localStorage.getItem("school") || "{}");
     if (schoolData && schoolData.SchoolRequestID) {
       setSchool(schoolData);
-      // Fetch campaigns for this school
-      fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`)
-        .then(res => res.json())
-        .then(data => {
-          setCampaigns(data);
-          localStorage.setItem("campaigns", JSON.stringify(data));
-        })
-        .catch(err => {
-          setCampaigns([]);
-          console.error("Failed to fetch campaigns:", err);
-        });
+
+      const fetchCampaigns = () => {
+        fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolData.SchoolRequestID}`)
+          .then(res => res.json())
+          .then(data => {
+            setCampaigns(data);
+            localStorage.setItem("campaigns", JSON.stringify(data));
+          })
+          .catch(err => {
+            setCampaigns([]);
+            console.error("Failed to fetch campaigns:", err);
+          });
+      };
+
+      fetchCampaigns();
+
+      const onFocus = () => fetchCampaigns();
+      window.addEventListener('focus', onFocus);
+
+      const onStorage = (e) => {
+        if (e.key === 'donationCompletedAt') {
+          fetchCampaigns();
+        }
+      };
+      window.addEventListener('storage', onStorage);
+
+      return () => {
+        window.removeEventListener('focus', onFocus);
+        window.removeEventListener('storage', onStorage);
+      };
     }
     // Adjust keys to match your localStorage structure
     const statsData = JSON.parse(localStorage.getItem("stats"));
@@ -93,6 +113,25 @@ export default function SchoolProfileDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear all authentication tokens and data
+    localStorage.removeItem('donorToken');
+    localStorage.removeItem('donorData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('schoolToken');
+    localStorage.removeItem('principalToken');
+    localStorage.removeItem('schoolData');
+    localStorage.removeItem('principalData');
+    localStorage.removeItem('schoolRequestEmail');
+    // Clear any cached data
+    localStorage.removeItem('campaigns');
+    localStorage.removeItem('stats');
+    localStorage.removeItem('topDonors');
+    localStorage.removeItem('expenses');
+    // Redirect to home page
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Navigation */}
@@ -117,6 +156,12 @@ export default function SchoolProfileDashboard() {
             alt="School Logo"
             className="w-10 h-10 bg-gray-300 rounded-full object-cover"
           />
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 transform"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -367,6 +412,11 @@ export default function SchoolProfileDashboard() {
               )}
             </div>
           </div> */}
+        </div>
+
+        {/* Donations Received */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 mb-8">
+          <SchoolDonations schoolID={school?.SchoolRequestID} />
         </div>
       </main>
 

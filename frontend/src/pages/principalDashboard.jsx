@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import landingBg from "../images/landing-bg.jpg";
 import BackButton from "../components/BackButton";
+ 
 export default function PrincipalDashboard() {
+  const navigate = useNavigate();
   const [pendingCampaigns, setPendingCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -61,6 +64,25 @@ export default function PrincipalDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear all authentication tokens and data
+    localStorage.removeItem('donorToken');
+    localStorage.removeItem('donorData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('schoolToken');
+    localStorage.removeItem('principalToken');
+    localStorage.removeItem('schoolData');
+    localStorage.removeItem('principalData');
+    localStorage.removeItem('schoolRequestEmail');
+    // Clear any cached data
+    localStorage.removeItem('campaigns');
+    localStorage.removeItem('stats');
+    localStorage.removeItem('topDonors');
+    localStorage.removeItem('expenses');
+    // Redirect to home page
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center py-10 px-2">
       {/* Background image */}
@@ -80,12 +102,17 @@ export default function PrincipalDashboard() {
           <BackButton />
         </div>
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8 justify-center">
-
+        <div className="flex items-center gap-4 mb-8 justify-between">
           <div>
             <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight drop-shadow">Principal  Dashboard</h1>
             <p className="text-blue-400 mt-1 drop-shadow">Review, approve, or reject school campaigns below.</p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 transform"
+          >
+            Logout
+          </button>
         </div>
 
         {/* Message */}
@@ -98,7 +125,7 @@ export default function PrincipalDashboard() {
         )}
 
         {/* Campaigns */}
-        <div className="bg-white bg-opacity-90 rounded-2xl shadow-xl p-8 min-h-[350px]">
+        <div className="bg-white bg-opacity-90 rounded-2xl shadow-xl p-8 min-h-[350px] mb-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-40">
               <svg className="w-10 h-10 text-blue-500 animate-spin mb-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
@@ -157,6 +184,8 @@ export default function PrincipalDashboard() {
             </div>
           )}
         </div>
+
+        
       </div>
     </div>
   );

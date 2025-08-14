@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoImg from '../images/logoskl.jpg';
-
-const categories = [
-  { id: "cat1", name: "Infrastructure" },
-  { id: "cat2", name: "Books & Supplies" },
-  { id: "cat3", name: "Health & Nutrition" },
-  { id: "cat4", name: "Events" },
-];
+import api from '../lib/api';
+import { categories } from '../config/categories';
 
 export default function SchoolCreateCampaign() {
   const [selectedType, setSelectedType] = useState("Monetary");
@@ -38,13 +33,18 @@ export default function SchoolCreateCampaign() {
   const schoolData = JSON.parse(localStorage.getItem("schoolData") || "{}");
   const schoolID = schoolData.SchoolRequestID;
   const schoolUsername = schoolData.Username || "School Username";
+  
+  // Debug logging
+  console.log('School data from localStorage:', schoolData);
+  console.log('School ID:', schoolID);
+  console.log('Available localStorage keys:', Object.keys(localStorage));
 
   useEffect(() => {
     async function fetchCampaigns() {
       if (!schoolID) return;
       try {
-        const res = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/school/${schoolID}`);
-        const data = await res.json();
+        const res = await api.get(`/api/campaigns/school/${schoolID}`);
+        const data = res.data;
         setCampaigns(Array.isArray(data) ? data : []);
       } catch (err) {
         setCampaigns([]);
@@ -72,10 +72,47 @@ export default function SchoolCreateCampaign() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      // Compress image if it's larger than 1MB
+      if (file.size > 1024 * 1024) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+          // Calculate new dimensions (max 800px width/height)
+          const maxDimension = 800;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            }
+          } else {
+            if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = URL.createObjectURL(file);
+      } else {
+        // For smaller images, use original
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      }
     });
   };
 
@@ -84,6 +121,10 @@ export default function SchoolCreateCampaign() {
     e.preventDefault();
 
     // Validate required fields
+    if (!schoolID) {
+      setMessageM("School ID not found. Please log in again.");
+      return;
+    }
     if (!titleM.trim()) {
       setMessageM("Please fill in the campaign title.");
       return;
@@ -104,6 +145,10 @@ export default function SchoolCreateCampaign() {
       setMessageM("Please select a deadline.");
       return;
     }
+    if (new Date(deadlineM) <= new Date()) {
+      setMessageM("Deadline must be in the future.");
+      return;
+    }
 
     setSubmittingM(true);
     setMessageM("");
@@ -118,23 +163,31 @@ export default function SchoolCreateCampaign() {
         image: base64Image,
         schoolID,
         categoryID: categoryIDM,
-        deadline: deadlineM,
+        deadline: new Date(deadlineM).toISOString(),
         monetaryType: "Monetary",
+        allowDonorUpdates: allowDonorUpdatesM,
       };
-      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      try {
+        console.log('Sending payload:', payload);
+        const response = await api.post('/api/campaigns', payload);
+        console.log('Campaign created successfully:', response.data);
         setMessageM("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
-      } else {
-        setMessageM(data.message || "Failed to create campaign.");
+      } catch (error) {
+        console.error('Campaign creation error:', error);
+        console.error('Error response:', error.response?.data);
+        if (error.response?.status === 413) {
+          setMessageM("Image file is too large. Please use a smaller image (under 5MB).");
+          return;
+        }
+        setMessageM(error.response?.data?.message || "Failed to create campaign.");
       }
     } catch (err) {
-      setMessageM("Error: " + err.message);
+      if (err.message.includes("File size must be less than 5MB")) {
+        setMessageM("Please select a smaller image file (under 5MB).");
+      } else {
+        setMessageM("Error: " + err.message);
+      }
     }
     setSubmittingM(false);
   };
@@ -144,6 +197,10 @@ export default function SchoolCreateCampaign() {
     e.preventDefault();
 
     // Validate required fields
+    if (!schoolID) {
+      setMessageN("School ID not found. Please log in again.");
+      return;
+    }
     if (!titleN.trim()) {
       setMessageN("Please fill in the campaign title.");
       return;
@@ -164,6 +221,10 @@ export default function SchoolCreateCampaign() {
       setMessageN("Please select a deadline.");
       return;
     }
+    if (new Date(deadlineN) <= new Date()) {
+      setMessageN("Deadline must be in the future.");
+      return;
+    }
 
     setSubmittingN(true);
     setMessageN("");
@@ -178,23 +239,31 @@ export default function SchoolCreateCampaign() {
         image: base64Image,
         schoolID,
         categoryID: categoryIDN,
-        deadline: deadlineN,
+        deadline: new Date(deadlineN).toISOString(),
         monetaryType: "Non-Monetary",
+        allowDonorUpdates: allowDonorUpdatesN,
       };
-      const res = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (res.ok) {
+      try {
+        console.log('Sending payload:', payload);
+        const response = await api.post('/api/campaigns', payload);
+        console.log('Campaign created successfully:', response.data);
         setMessageN("Campaign created!");
         setTimeout(() => navigate("/school-main"), 1800);
-      } else {
-        setMessageN(data.message || "Failed to create campaign.");
+      } catch (error) {
+        console.error('Campaign creation error:', error);
+        console.error('Error response:', error.response?.data);
+        if (error.response?.status === 413) {
+          setMessageN("Image file is too large. Please use a smaller image (under 5MB).");
+          return;
+        }
+        setMessageN(error.response?.data?.message || "Failed to create campaign.");
       }
     } catch (err) {
-      setMessageN("Error: " + err.message);
+      if (err.message.includes("File size must be less than 5MB")) {
+        setMessageN("Please select a smaller image file (under 5MB).");
+      } else {
+        setMessageN("Error: " + err.message);
+      }
     }
     setSubmittingN(false);
   };
@@ -376,6 +445,7 @@ export default function SchoolCreateCampaign() {
                     className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
                     value={deadlineM}
                     onChange={e => setDeadlineM(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">
@@ -515,6 +585,7 @@ export default function SchoolCreateCampaign() {
                     className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
                     value={deadlineN}
                     onChange={e => setDeadlineN(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                   <span className="absolute right-3 top-2.5 text-gray-400 pointer-events-none">

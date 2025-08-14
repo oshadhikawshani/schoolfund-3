@@ -8,6 +8,7 @@ import disabilitiesdash from "../images/disabilitiesdash.jpg";
 import healthcheckdash from "../images/healthcheckdash.jpg";
 import BackButton from "../components/BackButton";
 import Footer from "../components/Footer";
+ 
 
 
 export default function SchoolMain() {
@@ -42,11 +43,38 @@ export default function SchoolMain() {
       }
     }
     fetchCampaigns();
+
+    const onFocus = () => fetchCampaigns();
+    window.addEventListener('focus', onFocus);
+
+    const onStorage = (e) => {
+      if (e.key === 'donationCompletedAt') {
+        fetchCampaigns();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [schoolData]);
 
   const handleLogout = () => {
-    localStorage.removeItem("schoolData");
-    localStorage.removeItem("schoolToken");
+    // Clear all authentication tokens and data
+    localStorage.removeItem('donorToken');
+    localStorage.removeItem('donorData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('schoolToken');
+    localStorage.removeItem('principalToken');
+    localStorage.removeItem('schoolData');
+    localStorage.removeItem('principalData');
+    localStorage.removeItem('schoolRequestEmail');
+    // Clear any cached data
+    localStorage.removeItem('campaigns');
+    localStorage.removeItem('stats');
+    localStorage.removeItem('topDonors');
+    localStorage.removeItem('expenses');
     navigate("/");
   };
 
@@ -55,6 +83,28 @@ export default function SchoolMain() {
     const d = new Date(dateStr);
     return d.toLocaleDateString();
   }
+
+  // Calculate progress percentage
+  const calculateProgress = (raised, goal) => {
+    const safeGoal = Number(goal) || 0;
+    const safeRaised = Number(raised) || 0;
+    if (safeGoal <= 0) return 0;
+    return Math.min(Math.round((safeRaised / safeGoal) * 100), 100);
+  };
+
+  // Calculate remaining amount needed
+  const calculateRemaining = (raised, goal) => {
+    const safeGoal = Number(goal) || 0;
+    const safeRaised = Number(raised) || 0;
+    return Math.max(0, safeGoal - safeRaised);
+  };
+
+  // Calculate days remaining
+  const getDaysRemaining = (deadline) => {
+    const endDate = new Date(deadline);
+    const now = new Date();
+    return Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+  };
 
   function daysLeft(deadline) {
     if (!deadline) return "-";
@@ -174,31 +224,103 @@ export default function SchoolMain() {
                   </div>
                   <div className="p-4">
                     <p className="text-gray-600 text-sm mb-3">{c.description}</p>
-                    <div className="mb-3">
-                      {c.monetaryType === 'Monetary' ? (
-                        <>
-                          <p className="text-gray-800">
-                            <strong>Rs {c.raised ? c.raised.toLocaleString() : 0}</strong> raised
-                          </p>
-                          <p className="text-gray-500 text-sm">of Rs {c.amount ? c.amount.toLocaleString() : 0} goal</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-gray-800">
-                            <strong>{c.raised ? c.raised.toLocaleString() : 0}</strong> items received
-                          </p>
-                          <p className="text-gray-500 text-sm">of {c.amount ? c.amount.toLocaleString() : 0} items needed</p>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-blue-600 font-medium text-sm mb-2">
-                      Deadline: {formatDate(c.deadline)} ({daysLeft(c.deadline)} days left)
-                    </p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${Math.min(100, ((c.raised || 0) / (c.amount || 1)) * 100)}%` }}
-                      ></div>
+                    {/* Campaign Progress - Enhanced with percentage and status */}
+                    {c.monetaryType === 'Non-Monetary' ? (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-400 font-bold text-sm">
+                            {calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
+                          <div
+                            className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0)}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>{Number(c.itemsReceived || c.raised || 0).toLocaleString()} items received</span>
+                          <span>of {Number(c.amount || 0).toLocaleString()} needed</span>
+                        </div>
+                        {/* Remaining items */}
+                        {calculateRemaining(c.itemsReceived || c.raised || 0, c.amount || 0) > 0 && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            <span className="font-medium">Still needed: {calculateRemaining(c.itemsReceived || c.raised || 0, c.amount || 0).toLocaleString()} items</span>
+                          </div>
+                        )}
+                        {/* Status indicator */}
+                        <div className="mt-2">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 100
+                            ? 'bg-green-100 text-green-800'
+                            : calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 75
+                              ? 'bg-blue-100 text-blue-800'
+                              : calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 50
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                            {calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 100
+                              ? 'Completed'
+                              : calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 75
+                                ? 'Almost Complete'
+                                : calculateProgress(c.itemsReceived || c.raised || 0, c.amount || 0) >= 50
+                                  ? 'Halfway There'
+                                  : 'Just Started'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-400 font-bold text-sm">
+                            {calculateProgress(c.raised || 0, c.amount || c.goal || 0)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${calculateProgress(c.raised || 0, c.amount || c.goal || 0)}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>Rs. {Number(c.raised || 0).toLocaleString()} raised</span>
+                          <span>of Rs. {Number(c.amount || c.goal || 0).toLocaleString()} goal</span>
+                        </div>
+                        {/* Remaining amount */}
+                        {calculateRemaining(c.raised || 0, c.amount || c.goal || 0) > 0 && (
+                          <div className="mt-1 text-xs text-gray-500">
+                            <span className="font-medium">Still needed: Rs. {calculateRemaining(c.raised || 0, c.amount || c.goal || 0).toLocaleString()}</span>
+                          </div>
+                        )}
+                        {/* Status indicator */}
+                        <div className="mt-2">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 100
+                            ? 'bg-green-100 text-green-800'
+                            : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 75
+                              ? 'bg-blue-100 text-blue-800'
+                              : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 50
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                            {calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 100
+                              ? 'Goal Reached'
+                              : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 75
+                                ? 'Almost There'
+                                : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 50
+                                  ? 'Halfway There'
+                                  : 'Just Started'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Time Remaining */}
+                    <div className="flex items-center text-sm text-gray-600 mb-4">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      {getDaysRemaining(c.deadline)} days left
                     </div>
                   </div>
                 </>
@@ -288,6 +410,12 @@ export default function SchoolMain() {
                         <h4 className="font-semibold text-blue-800 mb-1">📈 Amount Raised</h4>
                         <p className="text-2xl font-bold text-blue-700">Rs {selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0}</p>
                       </div>
+                      {calculateRemaining(selectedCampaign.raised || 0, selectedCampaign.amount || 0) > 0 && (
+                        <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                          <h4 className="font-semibold text-red-800 mb-1">🎯 Still Needed</h4>
+                          <p className="text-2xl font-bold text-red-700">Rs {calculateRemaining(selectedCampaign.raised || 0, selectedCampaign.amount || 0).toLocaleString()}</p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
@@ -297,8 +425,14 @@ export default function SchoolMain() {
                       </div>
                       <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
                         <h4 className="font-semibold text-orange-800 mb-1">✅ Items Received</h4>
-                        <p className="text-2xl font-bold text-orange-700">{selectedCampaign.raised ? selectedCampaign.raised.toLocaleString() : 0} items</p>
+                        <p className="text-2xl font-bold text-orange-700">{selectedCampaign.itemsReceived || selectedCampaign.raised ? (selectedCampaign.itemsReceived || selectedCampaign.raised).toLocaleString() : 0} items</p>
                       </div>
+                      {calculateRemaining(selectedCampaign.itemsReceived || selectedCampaign.raised || 0, selectedCampaign.amount || 0) > 0 && (
+                        <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                          <h4 className="font-semibold text-red-800 mb-1">🎯 Still Needed</h4>
+                          <p className="text-2xl font-bold text-red-700">{calculateRemaining(selectedCampaign.itemsReceived || selectedCampaign.raised || 0, selectedCampaign.amount || 0).toLocaleString()} items</p>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -329,15 +463,79 @@ export default function SchoolMain() {
                       </svg>
                       Progress
                     </h4>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-3 mt-2 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, ((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100)}%` }}
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          selectedCampaign.monetaryType === 'Non-Monetary' 
+                            ? 'bg-gradient-to-r from-green-500 to-green-600'
+                            : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                        }`}
+                        style={{ width: `${calculateProgress(
+                          selectedCampaign.monetaryType === 'Non-Monetary' 
+                            ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                            : (selectedCampaign.raised || 0),
+                          selectedCampaign.amount || 0
+                        )}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {Math.min(100, Math.round(((selectedCampaign.raised || 0) / (selectedCampaign.amount || 1)) * 100))}% complete
-                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-600">
+                        {calculateProgress(
+                          selectedCampaign.monetaryType === 'Non-Monetary' 
+                            ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                            : (selectedCampaign.raised || 0),
+                          selectedCampaign.amount || 0
+                        )}% complete
+                      </p>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                        calculateProgress(
+                          selectedCampaign.monetaryType === 'Non-Monetary' 
+                            ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                            : (selectedCampaign.raised || 0),
+                          selectedCampaign.amount || 0
+                        ) >= 100
+                          ? 'bg-green-100 text-green-800'
+                          : calculateProgress(
+                              selectedCampaign.monetaryType === 'Non-Monetary' 
+                                ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                                : (selectedCampaign.raised || 0),
+                              selectedCampaign.amount || 0
+                            ) >= 75
+                            ? 'bg-blue-100 text-blue-800'
+                            : calculateProgress(
+                                selectedCampaign.monetaryType === 'Non-Monetary' 
+                                  ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                                  : (selectedCampaign.raised || 0),
+                                selectedCampaign.amount || 0
+                              ) >= 50
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {calculateProgress(
+                          selectedCampaign.monetaryType === 'Non-Monetary' 
+                            ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                            : (selectedCampaign.raised || 0),
+                          selectedCampaign.amount || 0
+                        ) >= 100
+                          ? (selectedCampaign.monetaryType === 'Non-Monetary' ? 'Completed' : 'Goal Reached')
+                          : calculateProgress(
+                              selectedCampaign.monetaryType === 'Non-Monetary' 
+                                ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                                : (selectedCampaign.raised || 0),
+                              selectedCampaign.amount || 0
+                            ) >= 75
+                            ? (selectedCampaign.monetaryType === 'Non-Monetary' ? 'Almost Complete' : 'Almost There')
+                            : calculateProgress(
+                                selectedCampaign.monetaryType === 'Non-Monetary' 
+                                  ? (selectedCampaign.itemsReceived || selectedCampaign.raised || 0)
+                                  : (selectedCampaign.raised || 0),
+                                selectedCampaign.amount || 0
+                              ) >= 50
+                              ? 'Halfway There'
+                              : 'Just Started'
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -484,6 +682,8 @@ export default function SchoolMain() {
             </div>
           </div>
         </div>
+
+        
 
         {/* Quick Actions */}
       </main>

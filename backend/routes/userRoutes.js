@@ -79,4 +79,30 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Token validation route
+router.get('/validate-token', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    const token = authHeader.slice(7);
+    const payload = jwt.verify(token, process.env.JWT_SECRET, { clockTolerance: 5 });
+    
+    res.json({ 
+      valid: true, 
+      payload,
+      message: 'Token is valid'
+    });
+  } catch (err) {
+    console.error('Token validation error:', err.message);
+    res.status(401).json({ 
+      valid: false, 
+      error: 'Invalid or expired token',
+      details: err.message 
+    });
+  }
+});
+
 module.exports = router; 
