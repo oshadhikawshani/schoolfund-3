@@ -7,6 +7,7 @@ import api from "../lib/api";
 // 👇 use the existing logo image as fallback
 const FALLBACK = "/logoskl.jpg";
 
+
 export default function BrowseCampaigns() {
   const [campaigns, setCampaigns] = useState([]);
   const [allCampaigns, setAllCampaigns] = useState([]); // Store all campaigns for client-side filtering
@@ -316,7 +317,7 @@ export default function BrowseCampaigns() {
         if (!schoolData?.location?.lat || !schoolData?.location?.lng) {
           return false; // Hide campaigns without location data when location filter is active
         }
-        
+
         const distance = calculateDistance(donorLocation, schoolData.location);
         return distance <= 50; // Show campaigns within 50km
       });
@@ -409,16 +410,16 @@ export default function BrowseCampaigns() {
     const R = 6371; // Earth's radius in kilometers
     const dLat = lat2 - lat1;
     const dLng = lng2 - lng1;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1) * Math.cos(lat2) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in kilometers
   };
 
   const requestLocationPermission = () => {
     setLocationLoading(true);
-    
+
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by this browser.');
       setLocationLoading(false);
@@ -434,15 +435,15 @@ export default function BrowseCampaigns() {
           city: 'Your Location',
           country: 'Unknown'
         };
-        
+
         setDonorLocation(newLocation);
         setLocationFilter(true);
         setLocationPermission('granted');
         setLocationLoading(false);
-        
+
         // Store location in localStorage
         localStorage.setItem('donorLocation', JSON.stringify(newLocation));
-        
+
         // Try to get city name using reverse geocoding
         fetchCityFromCoordinates(position.coords.latitude, position.coords.longitude);
       },
@@ -450,8 +451,8 @@ export default function BrowseCampaigns() {
         console.error('Error getting location:', error);
         setLocationLoading(false);
         setLocationPermission('denied');
-        
-        switch(error.code) {
+
+        switch (error.code) {
           case error.PERMISSION_DENIED:
             alert('Location permission denied. Please enable location access in your browser settings.');
             break;
@@ -499,8 +500,8 @@ export default function BrowseCampaigns() {
             return {
               city: data.locality || 'Unknown City',
               country: data.countryName || 'Unknown Country',
-              fullAddress: data.localityInfo?.administrative?.[0]?.name ? 
-                `${data.locality}, ${data.localityInfo.administrative[0].name}, ${data.countryName}` : 
+              fullAddress: data.localityInfo?.administrative?.[0]?.name ?
+                `${data.locality}, ${data.localityInfo.administrative[0].name}, ${data.countryName}` :
                 `${data.locality}, ${data.countryName}`
             };
           }
@@ -513,15 +514,15 @@ export default function BrowseCampaigns() {
       try {
         console.log(`Trying ${service.name} for location data...`);
         const response = await fetch(service.url);
-        
+
         if (!response.ok) {
           console.log(`${service.name} failed with status:`, response.status);
           continue;
         }
-        
+
         const data = await response.json();
         const locationData = service.parser(data);
-        
+
         if (locationData) {
           const updatedLocation = {
             ...donorLocation,
@@ -532,7 +533,7 @@ export default function BrowseCampaigns() {
             lng: lng,
             service: service.name
           };
-          
+
           setDonorLocation(updatedLocation);
           localStorage.setItem('donorLocation', JSON.stringify(updatedLocation));
           console.log(`Location details fetched from ${service.name}:`, updatedLocation);
@@ -719,19 +720,18 @@ export default function BrowseCampaigns() {
                   <button
                     onClick={toggleLocationFilter}
                     disabled={locationLoading}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
-                      locationFilter
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${locationFilter
                         ? 'bg-blue-50 border-blue-300 text-blue-700'
                         : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                    } ${locationLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      } ${locationLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-center">
                       <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                       </svg>
                       <span className="text-sm font-medium">
-                        {locationLoading ? 'Getting location...' : 
-                         locationFilter ? 'Nearby Campaigns' : 'Show Nearby Campaigns'}
+                        {locationLoading ? 'Getting location...' :
+                          locationFilter ? 'Nearby Campaigns' : 'Show Nearby Campaigns'}
                       </span>
                     </div>
                     {locationFilter && (
@@ -740,7 +740,7 @@ export default function BrowseCampaigns() {
                       </svg>
                     )}
                   </button>
-                  
+
                   {locationFilter && donorLocation && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center text-sm text-blue-700">
@@ -762,7 +762,7 @@ export default function BrowseCampaigns() {
                       </div>
                     </div>
                   )}
-                  
+
                   {locationPermission === 'denied' && (
                     <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
                       <div className="flex items-center text-sm text-red-700">

@@ -14,7 +14,7 @@ const allowedOrigins = [
   'https://schoolfund.vercel.app',
   'schoolfund.vercel.app/',
   'schoolfund.vercel.app',
-
+  'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/'
 ];
 
 app.use(cors({
