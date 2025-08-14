@@ -21,6 +21,9 @@ export default function BrowseCampaigns() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
   const [donorLocation, setDonorLocation] = useState(null);
+  const [locationFilter, setLocationFilter] = useState(false);
+  const [locationPermission, setLocationPermission] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const categoryNames = categories.map(cat => cat.name);
 
@@ -193,7 +196,7 @@ export default function BrowseCampaigns() {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (response.status === 200 && response.data.location) {
           setDonorLocation(response.data.location);
           // Store the fetched location for future use
@@ -227,17 +230,17 @@ export default function BrowseCampaigns() {
       console.log('No donor location available, skipping location-based sorting');
       return campaigns;
     }
-    
+
     return campaigns.sort((a, b) => {
       const schoolA = schoolsData[a.schoolID];
       const schoolB = schoolsData[b.schoolID];
-      
+
       // If school location data is not available, keep original order
-      if (!schoolA?.location?.lat || !schoolA?.location?.lng || 
-          !schoolB?.location?.lat || !schoolB?.location?.lng) {
+      if (!schoolA?.location?.lat || !schoolA?.location?.lng ||
+        !schoolB?.location?.lat || !schoolB?.location?.lng) {
         return 0;
       }
-      
+
       const distanceA = calculateDistance(donorLocation, schoolA.location);
       const distanceB = calculateDistance(donorLocation, schoolB.location);
       return distanceA - distanceB;
@@ -306,9 +309,25 @@ export default function BrowseCampaigns() {
       });
     }
 
-    filtered = sortCampaignsByLocation(filtered);
+    // Filter by location proximity
+    if (locationFilter && donorLocation && donorLocation.lat && donorLocation.lng) {
+      filtered = filtered.filter(campaign => {
+        const schoolData = schoolsData[campaign.schoolID];
+        if (!schoolData?.location?.lat || !schoolData?.location?.lng) {
+          return false; // Hide campaigns without location data when location filter is active
+        }
+        
+        const distance = calculateDistance(donorLocation, schoolData.location);
+        return distance <= 50; // Show campaigns within 50km
+      });
+    }
+
+    // Sort by location if location filter is active, otherwise use existing sorting
+    if (locationFilter && donorLocation && donorLocation.lat && donorLocation.lng) {
+      filtered = sortCampaignsByLocation(filtered);
+    }
     setCampaigns(filtered);
-  }, [allCampaigns, donorLocation, typeFilter, categoryFilter, timeFilter, searchQuery]);
+  }, [allCampaigns, donorLocation, typeFilter, categoryFilter, timeFilter, searchQuery, locationFilter]);
 
   const handleTypeChange = (value) => {
     setTypeFilter(prev => {
@@ -341,9 +360,10 @@ export default function BrowseCampaigns() {
     setCategoryFilter([]);
     setTimeFilter([]);
     setSearchQuery("");
+    setLocationFilter(false);
   };
 
-  const hasActiveFilters = typeFilter.length > 0 || categoryFilter.length > 0 || timeFilter.length > 0 || searchQuery.trim() !== "";
+  const hasActiveFilters = typeFilter.length > 0 || categoryFilter.length > 0 || timeFilter.length > 0 || searchQuery.trim() !== "" || locationFilter;
 
   // Calculate progress percentage
   const calculateProgress = (raised, goal) => {
@@ -351,6 +371,13 @@ export default function BrowseCampaigns() {
     const safeRaised = Number(raised) || 0;
     if (safeGoal <= 0) return 0;
     return Math.min(Math.round((safeRaised / safeGoal) * 100), 100);
+  };
+
+  // Calculate remaining amount needed
+  const calculateRemaining = (raised, goal) => {
+    const safeGoal = Number(goal) || 0;
+    const safeRaised = Number(raised) || 0;
+    return Math.max(0, safeGoal - safeRaised);
   };
 
   // Calculate days remaining
@@ -369,21 +396,179 @@ export default function BrowseCampaigns() {
   };
 
   const calculateDistance = (location1, location2) => {
-    // Simple distance calculation - in a real app you might want to use a more accurate formula
-    // or a geolocation library
+    // Haversine formula for accurate distance calculation
     if (!location1.lat || !location1.lng || !location2.lat || !location2.lng) {
       return Infinity; // Put items without location at the end
     }
+
+    const lat1 = parseFloat(location1.lat) * Math.PI / 180;
+    const lng1 = parseFloat(location1.lng) * Math.PI / 180;
+    const lat2 = parseFloat(location2.lat) * Math.PI / 180;
+    const lng2 = parseFloat(location2.lng) * Math.PI / 180;
+
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = lat2 - lat1;
+    const dLng = lng2 - lng1;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1) * Math.cos(lat2) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  const requestLocationPermission = () => {
+    setLocationLoading(true);
     
-    const lat1 = parseFloat(location1.lat);
-    const lng1 = parseFloat(location1.lng);
-    const lat2 = parseFloat(location2.lat);
-    const lng2 = parseFloat(location2.lng);
-    
-    // Simple Euclidean distance (not accurate for real-world coordinates but good enough for sorting)
-    return Math.sqrt(
-      Math.pow(lat1 - lat2, 2) + Math.pow(lng1 - lng2, 2)
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      setLocationLoading(false);
+      setLocationPermission('denied');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          city: 'Your Location',
+          country: 'Unknown'
+        };
+        
+        setDonorLocation(newLocation);
+        setLocationFilter(true);
+        setLocationPermission('granted');
+        setLocationLoading(false);
+        
+        // Store location in localStorage
+        localStorage.setItem('donorLocation', JSON.stringify(newLocation));
+        
+        // Try to get city name using reverse geocoding
+        fetchCityFromCoordinates(position.coords.latitude, position.coords.longitude);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setLocationLoading(false);
+        setLocationPermission('denied');
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            alert('Location permission denied. Please enable location access in your browser settings.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            alert('Location information is unavailable.');
+            break;
+          case error.TIMEOUT:
+            alert('Location request timed out.');
+            break;
+          default:
+            alert('An unknown error occurred while getting location.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
     );
+  };
+
+  const fetchCityFromCoordinates = async (lat, lng) => {
+    // Try multiple services for better accuracy
+    const services = [
+      {
+        name: 'Nominatim',
+        url: `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+        parser: (data) => {
+          if (data && data.address) {
+            const address = data.address;
+            return {
+              city: address.city || address.town || address.village || address.county || address.state || 'Unknown City',
+              country: address.country || 'Unknown Country',
+              fullAddress: data.display_name || 'Location available'
+            };
+          }
+          return null;
+        }
+      },
+      {
+        name: 'BigDataCloud',
+        url: `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
+        parser: (data) => {
+          if (data && data.locality) {
+            return {
+              city: data.locality || 'Unknown City',
+              country: data.countryName || 'Unknown Country',
+              fullAddress: data.localityInfo?.administrative?.[0]?.name ? 
+                `${data.locality}, ${data.localityInfo.administrative[0].name}, ${data.countryName}` : 
+                `${data.locality}, ${data.countryName}`
+            };
+          }
+          return null;
+        }
+      }
+    ];
+
+    for (const service of services) {
+      try {
+        console.log(`Trying ${service.name} for location data...`);
+        const response = await fetch(service.url);
+        
+        if (!response.ok) {
+          console.log(`${service.name} failed with status:`, response.status);
+          continue;
+        }
+        
+        const data = await response.json();
+        const locationData = service.parser(data);
+        
+        if (locationData) {
+          const updatedLocation = {
+            ...donorLocation,
+            city: locationData.city,
+            country: locationData.country,
+            fullAddress: locationData.fullAddress,
+            lat: lat,
+            lng: lng,
+            service: service.name
+          };
+          
+          setDonorLocation(updatedLocation);
+          localStorage.setItem('donorLocation', JSON.stringify(updatedLocation));
+          console.log(`Location details fetched from ${service.name}:`, updatedLocation);
+          return; // Success, exit early
+        }
+      } catch (error) {
+        console.log(`${service.name} failed:`, error.message);
+        continue; // Try next service
+      }
+    }
+
+    // If all services fail, use fallback
+    console.log('All location services failed, using fallback');
+    const updatedLocation = {
+      ...donorLocation,
+      city: 'Your Location',
+      country: 'Unknown',
+      fullAddress: 'Location available',
+      lat: lat,
+      lng: lng,
+      service: 'fallback'
+    };
+    setDonorLocation(updatedLocation);
+    localStorage.setItem('donorLocation', JSON.stringify(updatedLocation));
+  };
+
+  const toggleLocationFilter = () => {
+    if (locationFilter) {
+      setLocationFilter(false);
+    } else {
+      if (donorLocation && donorLocation.lat && donorLocation.lng) {
+        setLocationFilter(true);
+      } else {
+        requestLocationPermission();
+      }
+    }
   };
 
   return (
@@ -510,7 +695,7 @@ export default function BrowseCampaigns() {
               </div>
 
               {/* Time Remaining Section */}
-              <div>
+              <div className="mb-8">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Time Remaining</h3>
                 <div className="space-y-3">
                   {timeOptions.map((time) => (
@@ -524,6 +709,73 @@ export default function BrowseCampaigns() {
                       <span className="ml-3 text-sm text-gray-700 group-hover:text-blue-600 transition-colors duration-200">{time}</span>
                     </label>
                   ))}
+                </div>
+              </div>
+
+              {/* Location Filter Section */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Location</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={toggleLocationFilter}
+                    disabled={locationLoading}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 ${
+                      locationFilter
+                        ? 'bg-blue-50 border-blue-300 text-blue-700'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                    } ${locationLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium">
+                        {locationLoading ? 'Getting location...' : 
+                         locationFilter ? 'Nearby Campaigns' : 'Show Nearby Campaigns'}
+                      </span>
+                    </div>
+                    {locationFilter && (
+                      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                  
+                  {locationFilter && donorLocation && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center text-sm text-blue-700">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">Your Location:</span>
+                      </div>
+                      <div className="mt-1 text-xs text-blue-600">
+                        {donorLocation.city}, {donorLocation.country}
+                      </div>
+                      {donorLocation.fullAddress && donorLocation.fullAddress !== `${donorLocation.city}, ${donorLocation.country}` && (
+                        <div className="mt-1 text-xs text-blue-500">
+                          {donorLocation.fullAddress}
+                        </div>
+                      )}
+                      <div className="mt-1 text-xs text-blue-500">
+                        Showing campaigns within 50km
+                      </div>
+                    </div>
+                  )}
+                  
+                  {locationPermission === 'denied' && (
+                    <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-center text-sm text-red-700">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">Location Access Denied</span>
+                      </div>
+                      <div className="mt-1 text-xs text-red-600">
+                        Enable location access in browser settings to use this feature
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -611,6 +863,11 @@ export default function BrowseCampaigns() {
                                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                               </svg>
                               {schoolsData[c.schoolID].location.address}
+                              {locationFilter && donorLocation && schoolsData[c.schoolID]?.location?.lat && (
+                                <span className="ml-2 text-blue-600 font-medium">
+                                  ({calculateDistance(donorLocation, schoolsData[c.schoolID].location).toFixed(1)}km)
+                                </span>
+                              )}
                             </div>
                           )}
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${c.monetaryType === 'Non-Monetary'
@@ -628,31 +885,95 @@ export default function BrowseCampaigns() {
 
 
 
-                        {/* Campaign Progress - Different for Monetary vs Non-Monetary */}
+                        {/* Campaign Progress - Enhanced with percentage and status */}
                         {c.monetaryType === 'Non-Monetary' ? (
                           <div className="mb-4">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="text-gray-700">{Number(c.itemsReceived || 0).toLocaleString()} items received</span>
-                              <span className="text-gray-600">of {Number(c.amount || 0).toLocaleString()} needed</span>
+                            <div className="flex justify-between items-center mb-2">
+
+                              <span className="text-gray-400 font-bold text-sm">
+                                {calculateProgress(c.itemsReceived || 0, c.amount || 0)}%
+                              </span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
                               <div
-                                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 ease-out"
                                 style={{ width: `${calculateProgress(c.itemsReceived || 0, c.amount || 0)}%` }}
                               ></div>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>{Number(c.itemsReceived || 0).toLocaleString()} items received</span>
+                              <span>of {Number(c.amount || 0).toLocaleString()} needed</span>
+                            </div>
+                            {/* Remaining items */}
+                            {calculateRemaining(c.itemsReceived || 0, c.amount || 0) > 0 && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                <span className="font-medium">Still needed: {calculateRemaining(c.itemsReceived || 0, c.amount || 0).toLocaleString()} items</span>
+                              </div>
+                            )}
+                            {/* Status indicator */}
+                            <div className="mt-2">
+                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 100
+                                ? 'bg-green-100 text-green-800'
+                                : calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 75
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 50
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                {calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 100
+                                  ? 'Completed'
+                                  : calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 75
+                                    ? 'Almost Complete'
+                                    : calculateProgress(c.itemsReceived || 0, c.amount || 0) >= 50
+                                      ? 'Halfway There'
+                                      : 'Just Started'
+                                }
+                              </span>
                             </div>
                           </div>
                         ) : (
                           <div className="mb-4">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="text-gray-700">Rs. {Number(c.raised || 0).toLocaleString()} raised</span>
-                              <span className="text-gray-600">of Rs. {Number(c.amount || c.goal || 0).toLocaleString()} goal</span>
+                            <div className="flex justify-between items-center mb-2">
+
+                              <span className="text-gray-400 font-bold text-sm">
+                                {calculateProgress(c.raised || 0, c.amount || c.goal || 0)}%
+                              </span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
                               <div
-                                className="bg-[#0091d9] h-2 rounded-full transition-all duration-300"
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
                                 style={{ width: `${calculateProgress(c.raised || 0, c.amount || c.goal || 0)}%` }}
                               ></div>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>Rs. {Number(c.raised || 0).toLocaleString()} raised</span>
+                              <span>of Rs. {Number(c.amount || c.goal || 0).toLocaleString()} goal</span>
+                            </div>
+                            {/* Remaining amount */}
+                            {calculateRemaining(c.raised || 0, c.amount || c.goal || 0) > 0 && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                <span className="font-medium">Still needed: Rs. {calculateRemaining(c.raised || 0, c.amount || c.goal || 0).toLocaleString()}</span>
+                              </div>
+                            )}
+                            {/* Status indicator */}
+                            <div className="mt-2">
+                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 100
+                                ? 'bg-green-100 text-green-800'
+                                : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 75
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 50
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                {calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 100
+                                  ? 'Goal Reached'
+                                  : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 75
+                                    ? 'Almost There'
+                                    : calculateProgress(c.raised || 0, c.amount || c.goal || 0) >= 50
+                                      ? 'Halfway There'
+                                      : 'Just Started'
+                                }
+                              </span>
                             </div>
                           </div>
                         )}

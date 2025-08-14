@@ -6,6 +6,7 @@ export default function NonMonetaryDonationPage() {
   const { id } = useParams();
   const [campaign, setCampaign] = useState(null);
   const [file, setFile] = useState(null); // single file, backend expects "photo"
+  const [quantity, setQuantity] = useState(1); // Added quantity state
   const [deliveryMethod, setDeliveryMethod] = useState("handover");
   const [courierRef, setCourierRef] = useState("");
   const [deadlineDate, setDeadlineDate] = useState(""); // backend field name
@@ -36,6 +37,7 @@ export default function NonMonetaryDonationPage() {
     const formData = new FormData();
     formData.append("photo", file);               // <-- must be "photo"
     formData.append("campaignID", id);            // <-- capital ID
+    formData.append("quantity", quantity);        // Added quantity
     formData.append("deliveryMethod", deliveryMethod);
     if (deliveryMethod === "courier" && courierRef) {
       formData.append("courierRef", courierRef);
@@ -76,6 +78,20 @@ export default function NonMonetaryDonationPage() {
             required
           />
           <p className="text-xs text-slate-500 mt-1">Max 5MB; PNG/JPG/WEBP</p>
+        </div>
+
+        <div>
+          <label className="block font-semibold">Quantity of Items</label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            className="border p-2 rounded w-full"
+            min="1"
+            required
+            placeholder="How many items are you donating?"
+          />
+          <p className="text-xs text-slate-500 mt-1">Enter the number of items you're donating</p>
         </div>
 
         <div>

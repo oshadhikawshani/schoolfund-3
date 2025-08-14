@@ -11,6 +11,7 @@ const NonMonetaryDonationSchema = new mongoose.Schema(
     deliveryMethod: { type: String, enum: ["handover", "courier", "pickup"], required: true }, // Added "pickup" option
     courierRef: { type: String },
     imagePath: { type: String, required: true },
+    quantity: { type: Number, required: true, min: 1 }, // Added quantity field for amount of items
     status: { type: String, enum: ["pledged", "received", "cancelled"], default: "pledged" },
   },
   { timestamps: true }

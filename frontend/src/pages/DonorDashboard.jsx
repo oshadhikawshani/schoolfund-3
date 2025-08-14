@@ -113,8 +113,8 @@ const DonorDashboard = () => {
       const newMonetaryCount = historyData.monetary.length;
       const newNonMonetaryCount = historyData.nonMonetary.length;
 
-      if ((newMonetaryCount > previousMonetaryCount || newNonMonetaryCount > previousNonMonetaryCount) && 
-          (previousMonetaryCount > 0 || previousNonMonetaryCount > 0)) {
+      if ((newMonetaryCount > previousMonetaryCount || newNonMonetaryCount > previousNonMonetaryCount) &&
+        (previousMonetaryCount > 0 || previousNonMonetaryCount > 0)) {
         setShowNewDonationNotification(true);
         // Auto-hide notification after 5 seconds
         setTimeout(() => setShowNewDonationNotification(false), 5000);
@@ -163,24 +163,24 @@ const DonorDashboard = () => {
         try {
           const parsedData = JSON.parse(donorData);
           console.log('Donor data from localStorage:', parsedData);
-          
+
           // Try different possible field names for the name
           let name = parsedData.name || parsedData.Name || parsedData.fullName;
-          
+
           // Check if the name is actually an email address
           const isEmail = name && name.includes('@') && name.includes('.');
-          
+
           // If name looks like an email or is the same as email field, use fallback
           if (isEmail || (name && parsedData.email && name.toLowerCase() === parsedData.email.toLowerCase())) {
             console.log('Email is being used as name, using fallback');
             name = 'Donor';
           }
-          
+
           // If still no valid name, use fallback
           if (!name || name === parsedData.email) {
             name = 'Donor';
           }
-          
+
           setDonorName(name);
         } catch (error) {
           console.error('Error parsing donor data:', error);
@@ -535,11 +535,10 @@ const DonorDashboard = () => {
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('monetary')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'monetary'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'monetary'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center space-x-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -550,11 +549,10 @@ const DonorDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('nonMonetary')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'nonMonetary'
-                    ? 'border-purple-500 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'nonMonetary'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex items-center space-x-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -719,12 +717,11 @@ const DonorDashboard = () => {
                                     <span className="capitalize">{donation.deliveryMethod}</span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                      donation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${donation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
                                       donation.status === 'received' ? 'bg-green-100 text-green-800' :
-                                      donation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                      'bg-gray-100 text-gray-800'
-                                    }`}>
+                                        donation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                          'bg-gray-100 text-gray-800'
+                                      }`}>
                                       {donation.status.charAt(0).toUpperCase() + donation.status.slice(1)}
                                     </span>
                                   </td>
@@ -757,25 +754,14 @@ const DonorDashboard = () => {
 
 
         {/* Call to Action Section */}
-        <section className="bg-gradient-to-r from-[#0091d9] to-purple-600 rounded-lg p-8 text-white">
+        <section className="bg-[#0091d9]  rounded-lg p-8 text-white">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Make a Bigger Impact?</h2>
             <p className="text-lg text-blue-100 mb-8 max-w-3xl mx-auto">
               Your donations have already changed lives. Discover more campaigns and continue your journey of making a difference in children's education.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/donor/browseCampaigns"
-                className="bg-white text-[#0091d9] px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors border-2 border-white"
-              >
-                Make Monetary Donation
-              </Link>
-              <Link
-                to="/donor/browseCampaigns"
-                className="bg-white text-purple-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors border-2 border-white"
-              >
-                Donate Items
-              </Link>
+
               <Link
                 to="/donor/browseCampaigns"
                 className="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-[#0091d9] transition-colors"
@@ -837,19 +823,18 @@ const DonorDashboard = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status:</span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          selectedDonation.amount 
-                            ? (getStatusColor(selectedDonation.status) === 'green'
-                                ? 'bg-green-100 text-green-800'
-                                : getStatusColor(selectedDonation.status) === 'red'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-100 text-gray-800')
-                            : (selectedDonation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
-                               selectedDonation.status === 'received' ? 'bg-green-100 text-green-800' :
-                               selectedDonation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                               'bg-gray-100 text-gray-800')
-                        }`}>
-                          {selectedDonation.amount 
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedDonation.amount
+                          ? (getStatusColor(selectedDonation.status) === 'green'
+                            ? 'bg-green-100 text-green-800'
+                            : getStatusColor(selectedDonation.status) === 'red'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800')
+                          : (selectedDonation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
+                            selectedDonation.status === 'received' ? 'bg-green-100 text-green-800' :
+                              selectedDonation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800')
+                          }`}>
+                          {selectedDonation.amount
                             ? getStatusText(selectedDonation.status)
                             : selectedDonation.status.charAt(0).toUpperCase() + selectedDonation.status.slice(1)
                           }
@@ -879,27 +864,22 @@ const DonorDashboard = () => {
                   {/* Impact Summary */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Impact</h3>
-                    <div className={`rounded-lg p-4 space-y-3 ${
-                      selectedDonation.amount ? 'bg-blue-50' : 'bg-purple-50'
-                    }`}>
+                    <div className={`rounded-lg p-4 space-y-3 ${selectedDonation.amount ? 'bg-blue-50' : 'bg-purple-50'
+                      }`}>
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          selectedDonation.amount ? 'bg-blue-100' : 'bg-purple-100'
-                        }`}>
-                          <svg className={`w-5 h-5 ${
-                            selectedDonation.amount ? 'text-blue-600' : 'text-purple-600'
-                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedDonation.amount ? 'bg-blue-100' : 'bg-purple-100'
+                          }`}>
+                          <svg className={`w-5 h-5 ${selectedDonation.amount ? 'text-blue-600' : 'text-purple-600'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                         </div>
                         <div>
-                          <p className={`font-medium ${
-                            selectedDonation.amount ? 'text-blue-900' : 'text-purple-900'
-                          }`}>Direct Impact</p>
-                          <p className={`text-sm ${
-                            selectedDonation.amount ? 'text-blue-700' : 'text-purple-700'
-                          }`}>
-                            {selectedDonation.amount 
+                          <p className={`font-medium ${selectedDonation.amount ? 'text-blue-900' : 'text-purple-900'
+                            }`}>Direct Impact</p>
+                          <p className={`text-sm ${selectedDonation.amount ? 'text-blue-700' : 'text-purple-700'
+                            }`}>
+                            {selectedDonation.amount
                               ? 'Your donation directly supports this campaign'
                               : 'Your item donation directly benefits students'
                             }
@@ -915,7 +895,7 @@ const DonorDashboard = () => {
                         <div>
                           <p className="font-medium text-green-900">Transparency</p>
                           <p className="text-sm text-green-700">
-                            {selectedDonation.amount 
+                            {selectedDonation.amount
                               ? '100% of your donation goes to the campaign'
                               : 'Your donation is tracked and verified'
                             }
@@ -939,86 +919,86 @@ const DonorDashboard = () => {
                   </div>
                 </div>
 
-                                  {/* Campaign Details */}
-                  <div className="space-y-6">
-                    {/* Item Image for Non-Monetary Donations */}
-                    {!selectedDonation.amount && selectedDonation.imagePath && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Item Image</h3>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <img 
-                            src={`/uploads/${selectedDonation.imagePath}`} 
-                            alt="Donated item" 
-                            className="w-full h-48 object-cover rounded-lg"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'block';
-                            }}
-                          />
-                          <div className="hidden w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <p className="text-gray-500">Image not available</p>
-                          </div>
+                {/* Campaign Details */}
+                <div className="space-y-6">
+                  {/* Item Image for Non-Monetary Donations */}
+                  {!selectedDonation.amount && selectedDonation.imagePath && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Item Image</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <img
+                          src={`/uploads/${selectedDonation.imagePath}`}
+                          alt="Donated item"
+                          className="w-full h-48 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div className=" w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <p className="text-gray-500">Image not available</p>
                         </div>
                       </div>
-                    )}
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Information</h3>
-                      {selectedCampaign ? (
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                          {(() => {
-                            // Normalize campaign fields across different sources
-                            const targetAmount = selectedCampaign.amount || selectedCampaign.targetAmount || selectedCampaign.goal || 0;
-                            const raisedAmount = (selectedCampaign.raised ?? selectedCampaign.raisedAmount ?? 0);
-                            // Attach normalized fields for reuse below via a shallow copy
-                            selectedCampaign.targetAmount = targetAmount;
-                            selectedCampaign.raisedAmount = raisedAmount;
-                            return null;
-                          })()}
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-2">{selectedCampaign.campaignName}</h4>
-                            <p className="text-sm text-gray-600">{selectedCampaign.description}</p>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <span className="text-xs text-gray-500">Target Amount</span>
-                              <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.targetAmount || 0).toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Raised Amount</span>
-                              <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.raisedAmount || 0).toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Category</span>
-                              <p className="font-medium text-gray-900">{selectedCampaign.category || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Status</span>
-                              <p className="font-medium text-gray-900">{selectedCampaign.status || 'Active'}</p>
-                            </div>
-                          </div>
-
-                          {selectedCampaign.schoolName && (
-                            <div>
-                              <span className="text-xs text-gray-500">School</span>
-                              <p className="font-medium text-gray-900">{selectedCampaign.schoolName}</p>
-                            </div>
-                          )}
-
-                          {selectedCampaign.location && (
-                            <div>
-                              <span className="text-xs text-gray-500">Location</span>
-                              <p className="font-medium text-gray-900">{selectedCampaign.location}</p>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <p className="text-gray-500">Campaign information not available</p>
-                        </div>
-                      )}
                     </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Information</h3>
+                    {selectedCampaign ? (
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                        {(() => {
+                          // Normalize campaign fields across different sources
+                          const targetAmount = selectedCampaign.amount || selectedCampaign.targetAmount || selectedCampaign.goal || 0;
+                          const raisedAmount = (selectedCampaign.raised ?? selectedCampaign.raisedAmount ?? 0);
+                          // Attach normalized fields for reuse below via a shallow copy
+                          selectedCampaign.targetAmount = targetAmount;
+                          selectedCampaign.raisedAmount = raisedAmount;
+                          return null;
+                        })()}
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">{selectedCampaign.campaignName}</h4>
+                          <p className="text-sm text-gray-600">{selectedCampaign.description}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500">Target Amount</span>
+                            <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.targetAmount || 0).toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">Raised Amount</span>
+                            <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.raisedAmount || 0).toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">Category</span>
+                            <p className="font-medium text-gray-900">{selectedCampaign.category || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">Status</span>
+                            <p className="font-medium text-gray-900">{selectedCampaign.status || 'Active'}</p>
+                          </div>
+                        </div>
+
+                        {selectedCampaign.schoolName && (
+                          <div>
+                            <span className="text-xs text-gray-500">School</span>
+                            <p className="font-medium text-gray-900">{selectedCampaign.schoolName}</p>
+                          </div>
+                        )}
+
+                        {selectedCampaign.location && (
+                          <div>
+                            <span className="text-xs text-gray-500">Location</span>
+                            <p className="font-medium text-gray-900">{selectedCampaign.location}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <p className="text-gray-500">Campaign information not available</p>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Progress Bar */}
                   {selectedCampaign && (selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal) && (
@@ -1039,12 +1019,14 @@ const DonorDashboard = () => {
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(() => {
-                              const raised = Number(selectedCampaign.raisedAmount || selectedCampaign.raised || 0);
-                              const target = Number(selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0);
-                              if (!target || target <= 0) return 0;
-                              return Math.min((raised / target) * 100, 100);
-                            })()}%` }}
+                            style={{
+                              width: `${(() => {
+                                const raised = Number(selectedCampaign.raisedAmount || selectedCampaign.raised || 0);
+                                const target = Number(selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0);
+                                if (!target || target <= 0) return 0;
+                                return Math.min((raised / target) * 100, 100);
+                              })()}%`
+                            }}
                           ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-1">

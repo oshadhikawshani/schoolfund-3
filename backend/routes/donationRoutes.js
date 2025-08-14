@@ -122,11 +122,18 @@ router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req,
     console.log("User:", req.user);
     console.log("File:", req.file);
 
-    const { campaignID, deliveryMethod, deadlineDate, notes, courierRef } = req.body;
+    const { campaignID, deliveryMethod, deadlineDate, notes, courierRef, quantity } = req.body;
 
-    if (!campaignID || !deliveryMethod || !req.file) {
-      console.log("Validation failed: missing required fields", { campaignID, deliveryMethod, hasFile: !!req.file });
-      return res.status(400).json({ message: "photo, campaignID, deliveryMethod required" });
+    if (!campaignID || !deliveryMethod || !req.file || !quantity) {
+      console.log("Validation failed: missing required fields", { campaignID, deliveryMethod, hasFile: !!req.file, quantity });
+      return res.status(400).json({ message: "photo, campaignID, deliveryMethod, and quantity required" });
+    }
+
+    // Validate quantity
+    const numericQuantity = parseInt(quantity);
+    if (!Number.isFinite(numericQuantity) || numericQuantity < 1) {
+      console.log("Validation failed: invalid quantity", quantity);
+      return res.status(400).json({ message: "Quantity must be a positive number" });
     }
 
     // Import the NonMonetaryDonation model
@@ -141,6 +148,7 @@ router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req,
       notes: notes || null,
       courierRef: courierRef || null,
       imagePath: req.file.filename,
+      quantity: numericQuantity,
       status: "pledged"
     };
 
