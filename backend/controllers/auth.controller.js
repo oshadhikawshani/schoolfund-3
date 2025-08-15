@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Donor from "../models/Donor.js";
-
+//for backend
 export async function registerDonor(req, res) {
   try {
     const { name, email, password } = req.body;

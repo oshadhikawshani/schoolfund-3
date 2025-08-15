@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAllMonetaryDonations, fetchMonetaryDonationsStats } from '../api/donations';
 import { fetchCampaignById } from '../api/campaigns';
-
+//for frontend
 const AllMonetaryDonations = () => {
   const [donations, setDonations] = useState([]);
   const [stats, setStats] = useState(null);
@@ -14,7 +14,7 @@ const AllMonetaryDonations = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch all donations and stats in parallel
         const [donationsResponse, statsResponse] = await Promise.all([
           fetchAllMonetaryDonations(),
@@ -263,7 +263,7 @@ const AllMonetaryDonations = () => {
               </tbody>
             </table>
           </div>
-          
+
           {filteredDonations.length === 0 && (
             <div className="text-center py-8">
               <div className="text-gray-400 text-6xl mb-4">📊</div>
