@@ -343,14 +343,20 @@ export default function SchoolMain() {
         </div>
         {/* Modal for campaign details */}
         {modalOpen && selectedCampaign && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md  bg-opacity-30">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden transform transition-all duration-300 scale-100">
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-opacity-30"
+            onClick={() => setModalOpen(false)}
+          >
+            <div 
+              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform transition-all duration-300 scale-100"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Modal Header */}
               <div className="relative">
                 <img
                   src={selectedCampaign.image || bagdash}
                   alt={selectedCampaign.campaignName}
-                  className="w-full h-64 object-cover"
+                  className="w-full h-48 object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                 <button
@@ -386,8 +392,8 @@ export default function SchoolMain() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-6">
-                <div className="mb-6">
+              <div className="p-4">
+                <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -399,7 +405,7 @@ export default function SchoolMain() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {selectedCampaign.monetaryType === 'Monetary' ? (
                     <>
                       <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
@@ -437,7 +443,7 @@ export default function SchoolMain() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-semibold text-gray-700 mb-1 flex items-center">
                       <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
