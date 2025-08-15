@@ -716,7 +716,7 @@ const DonorDashboard = () => {
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span className="capitalize">{donation.deliveryMethod}</span>
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  {/* <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${donation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
                                       donation.status === 'received' ? 'bg-green-100 text-green-800' :
                                         donation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
@@ -724,7 +724,7 @@ const DonorDashboard = () => {
                                       }`}>
                                       {donation.status.charAt(0).toUpperCase() + donation.status.slice(1)}
                                     </span>
-                                  </td>
+                                  </td> */}
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {donation.deadlineDate ? formatDate(donation.deadlineDate) : 'No deadline'}
                                   </td>
@@ -821,25 +821,7 @@ const DonorDashboard = () => {
                         <span className="text-gray-600">Date:</span>
                         <span className="font-medium text-gray-900">{formatDate(selectedDonation.createdAt)}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Status:</span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedDonation.amount
-                          ? (getStatusColor(selectedDonation.status) === 'green'
-                            ? 'bg-green-100 text-green-800'
-                            : getStatusColor(selectedDonation.status) === 'red'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800')
-                          : (selectedDonation.status === 'pledged' ? 'bg-yellow-100 text-yellow-800' :
-                            selectedDonation.status === 'received' ? 'bg-green-100 text-green-800' :
-                              selectedDonation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800')
-                          }`}>
-                          {selectedDonation.amount
-                            ? getStatusText(selectedDonation.status)
-                            : selectedDonation.status.charAt(0).toUpperCase() + selectedDonation.status.slice(1)
-                          }
-                        </span>
-                      </div>
+
                       {selectedDonation.amount && selectedDonation.paymentMethod && (
                         <div className="flex justify-between">
                           <span className="text-gray-600">Payment Method:</span>
@@ -1030,8 +1012,8 @@ const DonorDashboard = () => {
                           ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>Rs. {Number((selectedCampaign.raisedAmount || selectedCampaign.raised || 0)).toLocaleString()}</span>
-                          <span>Rs. {Number((selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0)).toLocaleString()}</span>
+                          <span>{selectedDonation.amount ? 'Rs. ' : ''}{Number((selectedCampaign.raisedAmount || selectedCampaign.raised || 0)).toLocaleString()}</span>
+                          <span>{selectedDonation.amount ? 'Rs. ' : ''}{Number((selectedCampaign.targetAmount || selectedCampaign.amount || selectedCampaign.goal || 0)).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

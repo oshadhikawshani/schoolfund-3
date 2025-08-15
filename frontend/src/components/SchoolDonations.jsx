@@ -67,7 +67,6 @@ export default function SchoolDonations({ schoolID }) {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
-      case 'pledged':
         return 'bg-yellow-100 text-yellow-800';
       case 'failed':
       case 'cancelled':
@@ -81,7 +80,7 @@ export default function SchoolDonations({ schoolID }) {
   const normalizeStatusBucket = (donation) => {
     const status = donation?.status?.toLowerCase();
     if (status === 'completed' || status === 'received' || status === 'paid') return 'completed';
-    if (status === 'pending' || status === 'pledged') return 'pending';
+    if (status === 'pending') return 'pending';
     if (status === 'failed' || status === 'cancelled') return 'failed';
     return 'other';
   };
@@ -130,7 +129,7 @@ export default function SchoolDonations({ schoolID }) {
   const groupedByStatus = (source) => {
     const groups = [
       { key: 'completed', title: 'Completed / Received', donations: [] },
-      { key: 'pending', title: 'Pending / Pledged', donations: [] },
+      { key: 'pending', title: 'Pending', donations: [] },
       { key: 'failed', title: 'Failed / Cancelled', donations: [] },
       { key: 'other', title: 'Other', donations: [] }
     ];
@@ -221,7 +220,7 @@ export default function SchoolDonations({ schoolID }) {
           >
             <option value="all">All</option>
             <option value="completed">Completed / Received</option>
-            <option value="pending">Pending / Pledged</option>
+            <option value="pending">Pending</option>
             <option value="failed">Failed / Cancelled</option>
           </select>
         </div>
@@ -249,7 +248,7 @@ export default function SchoolDonations({ schoolID }) {
           <div className="text-lg font-semibold text-green-900">{filteredDonations.filter(d => normalizeStatusBucket(d) === 'completed').length}</div>
         </div>
         <div className="bg-yellow-50 rounded-lg p-3">
-          <div className="text-xs text-yellow-700">Pending / Pledged</div>
+                          <div className="text-xs text-yellow-700">Pending</div>
           <div className="text-lg font-semibold text-yellow-900">{filteredDonations.filter(d => normalizeStatusBucket(d) === 'pending').length}</div>
         </div>
         <div className="bg-red-50 rounded-lg p-3">

@@ -688,8 +688,7 @@ export default function BrowseCampaigns() {
                         onChange={() => handleCheckbox(cat)}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="ml-3 text-lg mr-2">{categoryIcons[cat] || "📋"}</span>
-                      <span className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors duration-200">{cat}</span>
+                      <span className="ml-3 text-sm text-gray-700 group-hover:text-blue-600 transition-colors duration-200">{cat}</span>
                     </label>
                   ))}
                 </div>
