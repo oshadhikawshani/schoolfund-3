@@ -5,7 +5,7 @@ import logo from "../images/logoskl.jpg";
 import landingBg from "../images/landing-bg.jpg";
 import BackButton from "../components/BackButton";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API = import.meta.env.VITE_API_URL || "https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
