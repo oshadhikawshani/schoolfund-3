@@ -1,5 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const SchoolRequest = require('../models/SchoolRequest');
 const Principal = require('../models/Principal');
 const { sendRegistrationEmail, sendApprovalEmail, sendRejectionEmail } = require('../utils/emailService');
@@ -306,8 +310,17 @@ router.post('/login', async (req, res) => {
 
     console.log('Login successful for school:', school.Username);
 
-    // Create a simple token (in a real app, use JWT)
-    const token = `school_${school._id}_${Date.now()}`;
+    // Create a proper JWT token
+    const token = jwt.sign(
+      { 
+        id: school._id, 
+        role: 'school',
+        username: school.Username,
+        schoolRequestID: school.SchoolRequestID
+      }, 
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     
     // Return school data and token
     res.json({
