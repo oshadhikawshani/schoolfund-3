@@ -350,8 +350,8 @@ const DonorDashboard = () => {
               <span className="text-xl font-bold text-gray-900">School Fund</span>
             </div>
             <nav className="flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
-              <a href="donor/browseCampaigns" className="text-gray-600 hover:text-gray-900">Browse Campaigns</a>
-              <a href="/donor-dashboard" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">My Dashboard</a>
+              <Link to="/donor/browseCampaigns" className="text-gray-600 hover:text-gray-900">Browse Campaigns</Link>
+              <Link to="/donor-dashboard" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">My Dashboard</Link>
             </nav>
             <div className="relative">
               <button

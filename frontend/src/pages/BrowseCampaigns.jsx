@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { fetchCampaigns as apiFetchCampaigns } from "../api/campaigns";
 import { categories, categoryMap, getCategoryDisplayName } from "../config/categories";
 import api from "../lib/api";
@@ -590,9 +590,9 @@ export default function BrowseCampaigns() {
 
             {/* Navigation - Centered */}
             <nav className="flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
-              <a href="#" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">Browse Campaigns</a>
+              <Link to="/donor/browseCampaigns" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-2">Browse Campaigns</Link>
               {/* <a href="#" className="text-gray-600 hover:text-gray-900">My Donations</a> */}
-              <a href="/donor-dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</a>
+              <Link to="/donor-dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
             </nav>
 
             {/* User Avatar and Logout */}
