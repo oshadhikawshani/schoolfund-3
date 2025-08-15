@@ -1,5 +1,4 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const Campaign = require('../models/Campaign');
 const SchoolRequest = require('../models/SchoolRequest');
 const Payment = require('../models/Payment');
@@ -408,19 +407,8 @@ router.post('/principal-login', async (req, res) => {
     if (!school) {
       return res.status(401).json({ message: 'Invalid principal credentials' });
     }
-    
-    // Create a proper JWT token
-    const token = jwt.sign(
-      { 
-        id: school._id, 
-        role: 'principal',
-        username: school.Username,
-        schoolRequestID: school.SchoolRequestID
-      }, 
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
+    // Create a simple token (for demo; use JWT in production)
+    const token = `principal_${school._id}_${Date.now()}`;
     res.json({
       message: 'Login successful',
       token,

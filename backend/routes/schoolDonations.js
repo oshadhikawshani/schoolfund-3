@@ -165,55 +165,6 @@ router.get("/public/:schoolID", async (req, res) => {
   }
 });
 
-// Update non-monetary donation status (pledged -> received)
-router.put("/nonmonetary/:donationId/status", verifySchoolAuth, async (req, res) => {
-  try {
-    const { donationId } = req.params;
-    const { status } = req.body;
-    const schoolID = req.user.id;
-
-    // Validate status
-    if (!status || !["pledged", "received", "cancelled"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status. Must be 'pledged', 'received', or 'cancelled'" });
-    }
-
-    // Find the donation and verify it belongs to this school's campaigns
-    const donation = await NonMonetaryDonation.findById(donationId);
-    if (!donation) {
-      return res.status(404).json({ message: "Donation not found" });
-    }
-
-    // Verify the donation belongs to a campaign of this school
-    const campaign = await Campaign.findOne({ 
-      _id: donation.campaignID, 
-      schoolID: schoolID 
-    });
-    
-    if (!campaign) {
-      return res.status(403).json({ message: "You can only update donations for your school's campaigns" });
-    }
-
-    // Update the donation status
-    donation.status = status;
-    await donation.save();
-
-    res.json({ 
-      success: true, 
-      message: `Donation status updated to ${status}`,
-      donation: {
-        _id: donation._id,
-        status: donation.status,
-        campaignID: donation.campaignID,
-        updatedAt: donation.updatedAt
-      }
-    });
-
-  } catch (error) {
-    console.error('Error updating donation status:', error);
-    res.status(500).json({ message: 'Failed to update donation status', error: error.message });
-  }
-});
-
 // Simple test endpoint to get all donations (for debugging)
 router.get("/debug/all", async (req, res) => {
   try {

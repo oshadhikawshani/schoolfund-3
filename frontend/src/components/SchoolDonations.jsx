@@ -9,8 +9,6 @@ export default function SchoolDonations({ schoolID }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all, completed, pending, failed
   const [groupBy, setGroupBy] = useState('status'); // status | none
   const [page, setPage] = useState(1);
-  const [updatingStatus, setUpdatingStatus] = useState({}); // Track which donations are being updated
-  const [successMessage, setSuccessMessage] = useState(''); // Success message for status updates
   const pageSize = 5;
 
   useEffect(() => {
@@ -100,68 +98,6 @@ export default function SchoolDonations({ schoolID }) {
     }
   };
 
-  // Function to update donation status
-  const updateDonationStatus = async (donationId, newStatus) => {
-    try {
-      setUpdatingStatus(prev => ({ ...prev, [donationId]: true }));
-      
-      // Check if we have authentication token
-      const token = localStorage.getItem("schoolToken") || localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication required. Please log in again.");
-        return;
-      }
-
-      console.log('Updating donation status:', { donationId, newStatus, token: token.substring(0, 20) + '...' });
-      
-      const response = await api.put(`/api/school-donations/nonmonetary/${donationId}/status`, {
-        status: newStatus
-      });
-
-      console.log('API response:', response.data);
-
-      if (response.data.success) {
-        // Update the donation in the local state
-        setDonations(prevDonations => 
-          prevDonations.map(donation => 
-            donation._id === donationId 
-              ? { ...donation, status: newStatus }
-              : donation
-          )
-        );
-        
-        // Show success message
-        setSuccessMessage(`Donation status updated to ${newStatus} successfully!`);
-        setTimeout(() => setSuccessMessage(''), 3000); // Clear after 3 seconds
-      }
-    } catch (err) {
-      console.error('Error updating donation status:', err);
-      console.error('Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText
-      });
-      
-      let errorMessage = 'Failed to update donation status';
-      if (err.response?.status === 401) {
-        errorMessage = 'Authentication failed. Please log in again.';
-      } else if (err.response?.status === 403) {
-        errorMessage = 'You are not authorized to update this donation.';
-      } else if (err.response?.status === 404) {
-        errorMessage = 'Donation not found.';
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setUpdatingStatus(prev => ({ ...prev, [donationId]: false }));
-    }
-  };
-
   const filteredDonations = donations
     .filter(donation => {
       if (filter === 'all') return true;
@@ -231,26 +167,11 @@ export default function SchoolDonations({ schoolID }) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span className="text-green-800">{successMessage}</span>
-          </div>
-        </div>
-      )}
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Donations Received</h2>
           <p className="text-gray-600 mt-1">All donations for your school campaigns</p>
-          <p className="text-sm text-blue-600 mt-1">
-            💡 For non-monetary donations: Click "Mark as Received" when you obtain the items to update campaign progress
-          </p>
         </div>
         
         {/* Filter Tabs */}
@@ -410,50 +331,6 @@ export default function SchoolDonations({ schoolID }) {
                               <span className="font-medium">Message:</span> {donation.message}
                             </div>
                           )}
-                          
-                          {/* Status Update Buttons for Non-Monetary Donations */}
-                          {donation.donationType === 'non-monetary' && donation.status === 'pledged' && (
-                            <div className="mt-3 flex gap-2">
-                              <button
-                                onClick={() => updateDonationStatus(donation._id, 'received')}
-                                disabled={updatingStatus[donation._id]}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-green-100 text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              >
-                                {updatingStatus[donation._id] ? (
-                                  <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-green-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Updating...
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Mark as Received
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => updateDonationStatus(donation._id, 'cancelled')}
-                                disabled={updatingStatus[donation._id]}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-red-100 text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              >
-                                {updatingStatus[donation._id] ? (
-                                  'Updating...'
-                                ) : (
-                                  <>
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    Cancel
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          )}
                         </div>
                         <div className="text-right text-sm text-gray-500 ml-4">
                           {formatDate(donation.createdAt)}
@@ -512,50 +389,6 @@ export default function SchoolDonations({ schoolID }) {
                     {donation.message && (
                       <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
                         <span className="font-medium">Message:</span> {donation.message}
-                      </div>
-                    )}
-                    
-                    {/* Status Update Buttons for Non-Monetary Donations */}
-                    {donation.donationType === 'non-monetary' && donation.status === 'pledged' && (
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => updateDonationStatus(donation._id, 'received')}
-                          disabled={updatingStatus[donation._id]}
-                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-green-100 text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {updatingStatus[donation._id] ? (
-                            <>
-                              <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-green-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Updating...
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              Mark as Received
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => updateDonationStatus(donation._id, 'cancelled')}
-                          disabled={updatingStatus[donation._id]}
-                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-red-100 text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {updatingStatus[donation._id] ? (
-                            'Updating...'
-                          ) : (
-                            <>
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                              Cancel
-                            </>
-                          )}
-                        </button>
                       </div>
                     )}
                   </div>
