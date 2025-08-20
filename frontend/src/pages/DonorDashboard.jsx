@@ -69,6 +69,11 @@ const DonorDashboard = () => {
       // Fetch campaign details for each monetary donation
       const campaignPromises = historyData.monetary.map(async (donation) => {
         try {
+          console.log('Processing monetary donation:', { 
+            donationId: donation._id, 
+            campaignID: donation.campaignID,
+            campaignIDType: typeof donation.campaignID 
+          });
           const campaign = await fetchCampaignById(donation.campaignID);
           return { donationId: donation._id, campaign };
         } catch (err) {
@@ -80,6 +85,11 @@ const DonorDashboard = () => {
       // Fetch campaign details for each non-monetary donation
       const nonMonetaryCampaignPromises = historyData.nonMonetary.map(async (donation) => {
         try {
+          console.log('Processing non-monetary donation:', { 
+            donationId: donation._id, 
+            campaignID: donation.campaignID,
+            campaignIDType: typeof donation.campaignID 
+          });
           const campaign = await fetchCampaignById(donation.campaignID);
           return { donationId: donation._id, campaign };
         } catch (err) {
@@ -97,11 +107,15 @@ const DonorDashboard = () => {
       campaignResults.forEach(({ donationId, campaign }) => {
         if (campaign) {
           campaignsMap[donationId] = campaign;
+        } else {
+          console.warn(`Campaign data missing for donation ${donationId}`);
         }
       });
       nonMonetaryCampaignResults.forEach(({ donationId, campaign }) => {
         if (campaign) {
           campaignsMap[donationId] = campaign;
+        } else {
+          console.warn(`Campaign data missing for donation ${donationId}`);
         }
       });
 

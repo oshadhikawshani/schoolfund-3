@@ -324,9 +324,39 @@ router.get('/', async (req, res) => {
 // Get campaign by ID
 router.get('/:id', async (req, res) => {
   try {
-    const campaignDoc = await Campaign.findById(req.params.id);
+    console.log('Fetching campaign with ID:', req.params.id);
+    let campaignDoc;
+    
+    // Try to find by MongoDB ObjectId first
+    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('Attempting to find by ObjectId:', req.params.id);
+      campaignDoc = await Campaign.findById(req.params.id);
+      if (campaignDoc) {
+        console.log('Found campaign by ObjectId:', campaignDoc._id);
+      }
+    }
+    
+    // If not found by ObjectId, try to find by campaignID string
     if (!campaignDoc) {
-      return res.status(404).json({ message: 'Campaign not found' });
+      console.log('Attempting to find by campaignID string:', req.params.id);
+      campaignDoc = await Campaign.findOne({ campaignID: req.params.id });
+      if (campaignDoc) {
+        console.log('Found campaign by campaignID:', campaignDoc.campaignID);
+      }
+    }
+    
+    if (!campaignDoc) {
+      console.log('Campaign not found for ID:', req.params.id);
+      // Add some debugging info about available campaigns
+      const allCampaigns = await Campaign.find().select('_id campaignID campaignName').limit(5).lean();
+      console.log('Sample campaigns in database:', allCampaigns);
+      return res.status(404).json({ 
+        message: 'Campaign not found',
+        debug: {
+          requestedId: req.params.id,
+          sampleCampaigns: allCampaigns
+        }
+      });
     }
     // Compute raised for this campaign
     const donations = await MonetaryDonation.find({ campaignID: campaignDoc._id })

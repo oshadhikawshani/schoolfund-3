@@ -12,6 +12,7 @@ export const fetchCampaigns = async (params = {}) => {
 
 export const fetchCampaignById = async (id) => {
   try {
+    console.log('Fetching campaign with ID:', id, 'Type:', typeof id);
     const response = await api.get(`/api/campaigns/${id}`);
     return response.data;
   } catch (error) {
