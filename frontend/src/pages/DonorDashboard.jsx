@@ -69,10 +69,10 @@ const DonorDashboard = () => {
       // Fetch campaign details for each monetary donation
       const campaignPromises = historyData.monetary.map(async (donation) => {
         try {
-          console.log('Processing monetary donation:', { 
-            donationId: donation._id, 
+          console.log('Processing monetary donation:', {
+            donationId: donation._id,
             campaignID: donation.campaignID,
-            campaignIDType: typeof donation.campaignID 
+            campaignIDType: typeof donation.campaignID
           });
           const campaign = await fetchCampaignById(donation.campaignID);
           return { donationId: donation._id, campaign };
@@ -85,10 +85,10 @@ const DonorDashboard = () => {
       // Fetch campaign details for each non-monetary donation
       const nonMonetaryCampaignPromises = historyData.nonMonetary.map(async (donation) => {
         try {
-          console.log('Processing non-monetary donation:', { 
-            donationId: donation._id, 
+          console.log('Processing non-monetary donation:', {
+            donationId: donation._id,
             campaignID: donation.campaignID,
-            campaignIDType: typeof donation.campaignID 
+            campaignIDType: typeof donation.campaignID
           });
           const campaign = await fetchCampaignById(donation.campaignID);
           return { donationId: donation._id, campaign };
@@ -922,16 +922,26 @@ const DonorDashboard = () => {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Item Image</h3>
                       <div className="bg-gray-50 rounded-lg p-4">
+
+
+
                         <img
-                          src={`/uploads/${selectedDonation.imagePath}`}
+                          src={`${import.meta.env.VITE_API_URL || 'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev'}/uploads/${selectedDonation.imagePath}`}
                           alt="Donated item"
                           className="w-full h-48 object-cover rounded-lg"
                           onError={(e) => {
+                            console.error('Image failed to load:', e.target.src);
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'block';
                           }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully');
+                          }}
                         />
-                        <div className=" w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <div
+                          className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center"
+                          style={{ display: 'none' }}
+                        >
                           <p className="text-gray-500">Image not available</p>
                         </div>
                       </div>
@@ -958,12 +968,12 @@ const DonorDashboard = () => {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <span className="text-xs text-gray-500">Target Amount</span>
-                            <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.targetAmount || 0).toLocaleString()}</p>
+                            <span className="text-xs text-gray-500">Target Items:</span>
+                            <p className="font-medium text-gray-900"> {Number(selectedCampaign.targetAmount || 0).toLocaleString()}</p>
                           </div>
                           <div>
-                            <span className="text-xs text-gray-500">Raised Amount</span>
-                            <p className="font-medium text-gray-900">Rs. {Number(selectedCampaign.raisedAmount || 0).toLocaleString()}</p>
+                            <span className="text-xs text-gray-500">Raised Items:</span>
+                            <p className="font-medium text-gray-900"> {Number(selectedCampaign.raisedAmount || 0).toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="text-xs text-gray-500">Category</span>

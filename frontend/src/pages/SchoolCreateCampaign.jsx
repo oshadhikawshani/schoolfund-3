@@ -434,6 +434,13 @@ export default function SchoolCreateCampaign() {
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+                {categoryIDM && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      {categories.find(cat => cat.id === categoryIDM)?.description || ''}
+                    </p>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-1">
@@ -574,6 +581,13 @@ export default function SchoolCreateCampaign() {
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+                {categoryIDN && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      {categories.find(cat => cat.id === categoryIDN)?.description || ''}
+                    </p>
+                  </div>
+                  )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-1">
