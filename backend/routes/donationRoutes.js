@@ -239,6 +239,40 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
   }
 });
 
+// ---------------- Debug endpoint to check donation campaign IDs ----------------
+router.get("/debug/campaign-ids", verifyDonorAuth, async (req, res) => {
+  try {
+    console.log("Debug: Checking campaign IDs in donations for user:", req.user);
+
+    const donorIdentifier = req.user.donorID;
+    
+    // Check monetary donations
+    const monetaryDonations = await MonetaryDonation.find({ donorID: donorIdentifier })
+      .select('_id campaignID')
+      .lean();
+    
+    // Check non-monetary donations
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+    const nonMonetaryDonations = await NonMonetaryDonation.find({ donorID: donorIdentifier })
+      .select('_id campaignID')
+      .lean();
+
+    console.log("Monetary donations campaign IDs:", monetaryDonations.map(d => ({ id: d._id, campaignID: d.campaignID, type: typeof d.campaignID })));
+    console.log("Non-monetary donations campaign IDs:", nonMonetaryDonations.map(d => ({ id: d._id, campaignID: d.campaignID, type: typeof d.campaignID })));
+
+    return res.json({
+      monetary: monetaryDonations,
+      nonMonetary: nonMonetaryDonations,
+      userInfo: {
+        donorID: donorIdentifier
+      }
+    });
+  } catch (e) {
+    console.error("Debug campaign IDs error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
 // ---------------- Debug endpoint to check donation data ----------------
 router.get("/debug/donations", verifyDonorAuth, async (req, res) => {
   try {

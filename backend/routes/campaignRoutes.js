@@ -401,6 +401,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Debug endpoint to list all campaigns
+router.get('/debug/list', async (req, res) => {
+  try {
+    const campaigns = await Campaign.find()
+      .select('_id campaignID campaignName status monetaryType')
+      .limit(20)
+      .lean();
+    
+    console.log('Debug: All campaigns in database:', campaigns);
+    
+    return res.json({
+      message: 'Debug: Campaign list',
+      total: campaigns.length,
+      campaigns: campaigns
+    });
+  } catch (err) {
+    console.error('Debug error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // Principal approves or rejects a campaign
 router.post('/principal-approve/:id', async (req, res) => {
   try {

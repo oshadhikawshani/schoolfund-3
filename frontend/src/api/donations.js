@@ -54,4 +54,15 @@ export const fetchDonorDetails = async () => {
     console.error('Error fetching donor details:', error);
     throw error;
   }
+};
+
+// Debug function to check campaign IDs in donations
+export const debugCampaignIds = async () => {
+  try {
+    const response = await api.get('/api/donations/debug/campaign-ids');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching debug campaign IDs:', error);
+    throw error;
+  }
 }; 

@@ -29,4 +29,15 @@ export const fetchCategories = async () => {
     console.error('Error fetching categories:', error);
     throw error;
   }
+};
+
+// Debug function to list all campaigns
+export const debugListCampaigns = async () => {
+  try {
+    const response = await api.get('/api/campaigns/debug/list');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching debug campaign list:', error);
+    throw error;
+  }
 }; 
