@@ -1,3 +1,24 @@
+const axios = require('axios');
+// Proxy route to forward requests to the remote API and bypass CORS issues
+app.use('/api/proxy/campaigns/:id', async (req, res) => {
+  const { id } = req.params;
+  const remoteUrl = `https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/${id}`;
+  try {
+    const response = await axios.get(remoteUrl, {
+      headers: {
+        // Forward any auth headers if needed
+        ...req.headers
+      }
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: 'Proxy error', details: error.message });
+    }
+  }
+});
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -12,10 +33,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app',
   'https://schoolfund.vercel.app',
-  'schoolfund.vercel.app/',
   'schoolfund.vercel.app',
-  // 'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/',
-  // 'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/',
   'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev'
 ];
 
