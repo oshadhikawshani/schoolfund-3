@@ -1,14 +1,44 @@
+const express = require('express');
 const axios = require('axios');
-// Proxy route to forward requests to the remote API and bypass CORS issues
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
+const cookieParser = require('cookie-parser');
+
+const app = express();
+
+// Allowed origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app',
+  'https://schoolfund.vercel.app',
+  'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev'
+];
+
+// Middlewares
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+app.use(cookieParser());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use('/uploads', express.static('uploads'));
+
+// Proxy route to forward requests to the remote API
 app.use('/api/proxy/campaigns/:id', async (req, res) => {
   const { id } = req.params;
   const remoteUrl = `https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/campaigns/${id}`;
+
   try {
     const response = await axios.get(remoteUrl, {
-      headers: {
-        // Forward any auth headers if needed
-        ...req.headers
-      }
+      headers: { ...req.headers }
     });
     res.status(response.status).json(response.data);
   } catch (error) {
@@ -19,44 +49,6 @@ app.use('/api/proxy/campaigns/:id', async (req, res) => {
     }
   }
 });
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-const cookieParser = require('cookie-parser');
-
-const app = express();
-const PORT = process.env.PORT || 4000;
-
-
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://schoolfund-5jziwauy5-oshis-projects-85a38774.vercel.app',
-  'https://schoolfund.vercel.app',
-  'schoolfund.vercel.app',
-  'https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev'
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
-
-app.use(cookieParser());
-
-// Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
-
-// Increase body size limits for large image uploads
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Test route
 app.get('/', (req, res) => {
@@ -64,32 +56,15 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-
-const schoolRequestRoutes = require('./routes/schoolRequestRoutes');
-app.use('/api/school-requests', schoolRequestRoutes);
-
-const campaignRoutes = require('./routes/campaignRoutes');
-app.use('/api/campaigns', campaignRoutes);
-
-const principalRoutes = require('./routes/principalRoutes');
-app.use('/api/principal', principalRoutes);
-
-const donorRoutes = require('./routes/donorRoutes');
-app.use('/api/donors', donorRoutes);
-
-const donationRoutes = require('./routes/donationRoutes');
-app.use('/api/donations', donationRoutes);
-
-const webhookRoutes = require('./routes/webhooks');
-app.use('/api/webhooks', webhookRoutes);
-
-const paymentRoutes = require('./routes/paymentRoutes');
-app.use('/api/payments', paymentRoutes);
-
-const schoolDonationsRoutes = require('./routes/schoolDonations');
-app.use('/api/school-donations', schoolDonationsRoutes);
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/school-requests', require('./routes/schoolRequestRoutes'));
+app.use('/api/campaigns', require('./routes/campaignRoutes'));
+app.use('/api/principal', require('./routes/principalRoutes'));
+app.use('/api/donors', require('./routes/donorRoutes'));
+app.use('/api/donations', require('./routes/donationRoutes'));
+app.use('/api/webhooks', require('./routes/webhooks'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/school-donations', require('./routes/schoolDonations'));
 
 // MongoDB connection
 console.log('Connecting to MongoDB with URI:', process.env.MONGO_URI ? 'URI exists' : 'MONGO_URI is missing');
@@ -104,6 +79,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Start server
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
