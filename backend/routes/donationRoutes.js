@@ -117,6 +117,19 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
       // Do not fail the request if payment record creation fails
     }
 
+    // Update donor totals and badge asynchronously (fire-and-forget)
+    try {
+      const Donor = require("../models/Donor");
+      const donor = await Donor.findOne({ DonorID: req.user.donorID });
+      if (donor) {
+        const newTotal = (donor.totalDonations || 0) + numericAmount;
+        const badge = newTotal >= 80000 ? 'Gold' : newTotal >= 40000 ? 'Silver' : newTotal >= 20000 ? 'Bronze' : 'None';
+        await Donor.findByIdAndUpdate(donor._id, { totalDonations: newTotal, badge });
+      }
+    } catch (badgeErr) {
+      console.warn('Failed to update donor badge/total:', badgeErr.message);
+    }
+
     return res.json({
       success: true,
       donationId: donation._id,

@@ -1,9 +1,90 @@
 const express = require('express');
 const Donor = require("../models/Donor");
 const DonorDetail = require("../models/DonorDetail");
+const MonetaryDonation = require("../models/MonetaryDonation");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+
+// Helper: determine badge by total amount (in LKR)
+function determineBadge(total) {
+  if (total >= 80000) return 'Gold';
+  if (total >= 40000) return 'Silver';
+  if (total >= 20000) return 'Bronze';
+  return 'None';
+}
+
+// GET /api/donors/top - Top 10 donors by totalDonations
+router.get('/top', async (_req, res) => {
+  try {
+    const top = await Donor.find()
+      .sort({ totalDonations: -1, updatedAt: -1 })
+      .limit(10)
+      .select('DonorID Username totalDonations badge')
+      .lean();
+    res.json({ top });
+  } catch (err) {
+    console.error('Top donors error:', err);
+    res.status(500).json({ error: 'Failed to fetch top donors' });
+  }
+});
+
+// POST /api/donors/recalculate - Recalculate totals and badges for all donors
+router.post('/recalculate', async (_req, res) => {
+  try {
+    const donors = await Donor.find().select('_id DonorID').lean();
+    let updated = 0;
+    for (const d of donors) {
+      const totalAgg = await MonetaryDonation.aggregate([
+        { $match: { donorID: d.DonorID } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]);
+      const total = totalAgg[0]?.total || 0;
+      const badge = determineBadge(total);
+      await Donor.findByIdAndUpdate(d._id, { totalDonations: total, badge });
+      updated++;
+    }
+    res.json({ success: true, updated });
+  } catch (err) {
+    console.error('Recalculate donors error:', err);
+    res.status(500).json({ error: 'Failed to recalculate donors' });
+  }
+});
+
+// GET /api/donors/me/stats - Current donor totals and badge
+router.get('/me/stats', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.token;
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev');
+    const donor = await Donor.findById(payload.id).select('_id DonorID totalDonations badge Username').lean();
+    if (!donor) return res.status(404).json({ error: 'Donor not found' });
+    // if totals not yet populated, compute on the fly
+    let total = donor.totalDonations || 0;
+    if (!total || total <= 0) {
+      const totalAgg = await MonetaryDonation.aggregate([
+        { $match: { donorID: donor.DonorID } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]);
+      total = totalAgg[0]?.total || 0;
+      const badge = determineBadge(total);
+      if (donor._id) {
+        await Donor.findByIdAndUpdate(donor._id, { totalDonations: total, badge });
+      }
+      donor.totalDonations = total;
+      donor.badge = badge;
+    }
+    res.json({
+      donorID: donor.DonorID,
+      email: donor.Username,
+      totalDonations: total,
+      badge: donor.badge || determineBadge(total)
+    });
+  } catch (err) {
+    console.error('My stats error:', err);
+    res.status(500).json({ error: 'Failed to fetch donor stats' });
+  }
+});
 
 // POST /api/donors/register
 router.post("/register", async (req, res) => {

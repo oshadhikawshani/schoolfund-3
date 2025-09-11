@@ -66,3 +66,25 @@ export const debugCampaignIds = async () => {
     throw error;
   }
 }; 
+
+// Donor stats (totals and badge)
+export const fetchMyDonorStats = async () => {
+  try {
+    const response = await api.get('/api/donors/me/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching donor stats:', error);
+    throw error;
+  }
+};
+
+// Top donors
+export const fetchTopDonors = async () => {
+  try {
+    const response = await api.get('/api/donors/top');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching top donors:', error);
+    throw error;
+  }
+};
