@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const MonetaryDonation = require("../models/MonetaryDonation");
+const Campaign = require("../models/Campaign");
 const Payment = require("../models/Payment");
 const { verifyDonorAuth } = require("../middleware/auth");
 
@@ -44,6 +45,19 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
 
     const visLabel = isAnon ? "Anonymous" : "Public";
 
+    // Fetch campaign and enforce closure rules
+    const campaign = await Campaign.findById(campaignID).lean();
+    if (!campaign) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    // Only enforce for monetary campaigns
+    if (campaign.monetaryType === "Monetary") {
+      if (campaign.isClosed) {
+        return res.status(403).json({ error: "Campaign closed", message: "Target reached!" });
+      }
+    }
+
     // Create donation record as immediately paid
     const donationData = {
       donorID: req.user.donorID, // Use donorID from JWT token
@@ -60,6 +74,31 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     const donation = await MonetaryDonation.create(donationData);
     console.log("Donation created successfully:", donation._id);
     console.log("Collection name:", donation.constructor.collection.name);
+
+    // If monetary campaign, atomically increment raised and close if target reached
+    if (campaign.monetaryType === "Monetary") {
+      const updated = await Campaign.findOneAndUpdate(
+        { _id: campaignID, isClosed: { $ne: true } },
+        [
+          {
+            $set: {
+              raised: { $add: ["$raised", numericAmount] }
+            }
+          },
+          {
+            $set: {
+              isClosed: { $gte: [ { $add: ["$raised", numericAmount] }, "$amount" ] }
+            }
+          }
+        ],
+        { new: true }
+      ).lean();
+
+      // If campaign was already closed concurrently
+      if (!updated || updated.isClosed && (campaign.raised ?? 0) + numericAmount > (campaign.amount ?? 0)) {
+        return res.status(403).json({ error: "Campaign closed", message: "Target reached!" });
+      }
+    }
 
     // Create a corresponding successful payment record
     let payment = null;

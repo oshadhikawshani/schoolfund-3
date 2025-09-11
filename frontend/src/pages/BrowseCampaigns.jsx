@@ -851,6 +851,11 @@ export default function BrowseCampaigns() {
                           }}
                           className="w-full h-48 object-cover"
                         />
+                        {Boolean(c.isClosed || (Number(c.raised || 0) >= Number(c.amount || c.goal || 0))) && (
+                          <div className="absolute top-3 left-3 bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                            Target reached
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-6 flex flex-col flex-grow">
@@ -985,16 +990,27 @@ export default function BrowseCampaigns() {
                           {getDaysRemaining(c.deadline)} days left
                         </div>
 
-                        {/* Donate Button - Different text for Non-Monetary */}
-                        <button
-                          onClick={() => navigate(c.monetaryType === 'Non-Monetary' ? `/donor/nonmonetary/${c._id}` : `/donor/donate/${c._id}`)}
-                          className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto ${c.monetaryType === 'Non-Monetary'
-                            ? 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
-                            : 'bg-[#0091d9] hover:bg-[#036ca1] text-white '
+                        {/* Donate Button - disable if closed (monetary only) */}
+                        {c.monetaryType === 'Non-Monetary' ? (
+                          <button
+                            onClick={() => navigate(`/donor/nonmonetary/${c._id}`)}
+                            className="w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto bg-[#0091d9] hover:bg-[#036ca1] text-white"
+                          >
+                            📦 Donate
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/donor/donate/${c._id}`)}
+                            disabled={Boolean(c.isClosed || (Number(c.raised || 0) >= Number(c.amount || c.goal || 0)))}
+                            className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 mt-auto ${
+                              Boolean(c.isClosed || (Number(c.raised || 0) >= Number(c.amount || c.goal || 0)))
+                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                : 'bg-[#0091d9] hover:bg-[#036ca1] text-white'
                             }`}
-                        >
-                          {c.monetaryType === 'Non-Monetary' ? '📦 Donate' : '💰 Donate'}
-                        </button>
+                          >
+                            {Boolean(c.isClosed || (Number(c.raised || 0) >= Number(c.amount || c.goal || 0))) ? '🎉 Target reached' : '💰 Donate'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

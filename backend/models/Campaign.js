@@ -6,6 +6,9 @@ const campaignSchema = new mongoose.Schema({
   campaignName: { type: String, required: true },
   description: { type: String, required: true },
   amount: { type: Number, required: true },
+  // Monetary progress tracking (Sprint 3)
+  raised: { type: Number, default: 0 },
+  isClosed: { type: Boolean, default: false },
   image: { type: String },
   schoolID: { type: String, required: true },
   categoryID: { 
