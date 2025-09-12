@@ -473,13 +473,71 @@ export default function SchoolProfileDashboard() {
                 onClick={async () => {
                   if (!school?.SchoolRequestID) return;
                   const month = reportMonth || new Date().toISOString().slice(0,7);
+                  // Use local backend for donations report since we added the endpoint there
+                  const url = `http://localhost:4000/api/schools/${school.SchoolRequestID}/donations-report?month=${month}&format=excel`;
+                  
+                  try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                      alert('Failed to download report');
+                      return;
+                    }
+                    
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    
+                    const monthName = new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    link.download = `school-donations-${monthName}.xlsx`;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(downloadUrl);
+                  } catch (error) {
+                    console.error('Download error:', error);
+                    alert('Failed to download report');
+                  }
+                }}
+                className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                Download Donations Report
+              </button>
+              {/* <button
+                onClick={async () => {
+                  if (!school?.SchoolRequestID) return;
+                  const month = reportMonth || new Date().toISOString().slice(0,7);
                   const url = `${api.defaults.baseURL}/api/schools/${school.SchoolRequestID}/expense-report?month=${month}`;
-                  window.open(url, '_blank');
+                  
+                  try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                      alert('Failed to download report');
+                      return;
+                    }
+                    
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    
+                    const monthName = new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    link.download = `school-expenses-${monthName}.csv`;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(downloadUrl);
+                  } catch (error) {
+                    console.error('Download error:', error);
+                    alert('Failed to download report');
+                  }
                 }}
                 className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
               >
                 Download Expense Report
-              </button>
+              </button> */}
             </div>
           </div>
           <SchoolDonations schoolID={school?.SchoolRequestID} />
