@@ -14,6 +14,7 @@ export default function MonetaryDonationPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState("");
+  const [isClosed, setIsClosed] = useState(false);
 
   // donor info (only for UX; backend auth uses token)
   const donorRaw = localStorage.getItem("donorData");
@@ -27,7 +28,10 @@ export default function MonetaryDonationPage() {
     (async () => {
       try {
         const res = await api.get(`/api/campaigns/${id}`);
-        if (mounted) setCampaign(res.data);
+        if (mounted) {
+          setCampaign(res.data);
+          setIsClosed(Boolean(res.data?.isClosed) || (Number(res.data?.raised || 0) >= Number(res.data?.amount || res.data?.goal || 0)));
+        }
       } catch {
         if (mounted) setNote("Could not load campaign.");
       }
@@ -44,6 +48,11 @@ export default function MonetaryDonationPage() {
     const numericAmount = Number(amount);
     if (!numericAmount || numericAmount <= 0) {
       setNote("Enter a valid amount.");
+      return;
+    }
+
+    if (isClosed) {
+      setNote("Target reached! Thank you for your support.");
       return;
     }
 
@@ -72,8 +81,18 @@ export default function MonetaryDonationPage() {
       // Immediately navigate to success page since donation is completed
       navigate('/donation/success');
     } catch (e) {
-      const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "❌ Error. Please try again.";
-      setNote(errorMsg);
+      const isClosedError = e?.response?.status === 403 && (
+        (e?.response?.data?.message || "").toLowerCase().includes("target") ||
+        (e?.response?.data?.error || "").toLowerCase().includes("closed")
+      );
+
+      if (isClosedError) {
+        setIsClosed(true);
+        setNote("Target reached! Thank you for your support.");
+      } else {
+        const errorMsg = e?.response?.data?.message || e?.response?.data?.error || e?.message || "❌ Error. Please try again.";
+        setNote(errorMsg);
+      }
       console.error("Donation error:", e);
     } finally {
       setLoading(false);
@@ -309,17 +328,20 @@ export default function MonetaryDonationPage() {
               {/* Submit Button - Stripe Style */}
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={isClosed || loading}
+                className={`w-full font-semibold py-4 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  isClosed ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                {`Donate Rs. ${Number(amount) || 0}`}
+                {isClosed ? 'Target reached' : `Donate Rs. ${Number(amount) || 0}`}
               </button>
 
               {/* Note */}
-              {note && (
+              {(note || isClosed) && (
                 <div className={`text-sm p-3 rounded-lg ${
-                  note.includes('❌') ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  (note && note.includes('❌')) ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
                 }`}>
-                  {note}
+                  {isClosed ? 'Target reached! Thank you for your support.' : note}
                 </div>
               )}
 

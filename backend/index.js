@@ -65,6 +65,7 @@ app.use('/api/donations', require('./routes/donationRoutes'));
 app.use('/api/webhooks', require('./routes/webhooks'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/school-donations', require('./routes/schoolDonations'));
+app.use('/api/schools', require('./routes/schools'));
 
 // MongoDB connection
 console.log('Connecting to MongoDB with URI:', process.env.MONGO_URI ? 'URI exists' : 'MONGO_URI is missing');

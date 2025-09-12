@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const MonetaryDonation = require("../models/MonetaryDonation");
+const Campaign = require("../models/Campaign");
 const Payment = require("../models/Payment");
 const { verifyDonorAuth } = require("../middleware/auth");
 
@@ -44,6 +45,19 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
 
     const visLabel = isAnon ? "Anonymous" : "Public";
 
+    // Fetch campaign and enforce closure rules
+    const campaign = await Campaign.findById(campaignID).lean();
+    if (!campaign) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    // Only enforce for monetary campaigns
+    if (campaign.monetaryType === "Monetary") {
+      if (campaign.isClosed) {
+        return res.status(403).json({ error: "Campaign closed", message: "Target reached!" });
+      }
+    }
+
     // Create donation record as immediately paid
     const donationData = {
       donorID: req.user.donorID, // Use donorID from JWT token
@@ -61,6 +75,31 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     console.log("Donation created successfully:", donation._id);
     console.log("Collection name:", donation.constructor.collection.name);
 
+    // If monetary campaign, atomically increment raised and close if target reached
+    if (campaign.monetaryType === "Monetary") {
+      const updated = await Campaign.findOneAndUpdate(
+        { _id: campaignID, isClosed: { $ne: true } },
+        [
+          {
+            $set: {
+              raised: { $add: ["$raised", numericAmount] }
+            }
+          },
+          {
+            $set: {
+              isClosed: { $gte: [ { $add: ["$raised", numericAmount] }, "$amount" ] }
+            }
+          }
+        ],
+        { new: true }
+      ).lean();
+
+      // If campaign was already closed concurrently
+      if (!updated || updated.isClosed && (campaign.raised ?? 0) + numericAmount > (campaign.amount ?? 0)) {
+        return res.status(403).json({ error: "Campaign closed", message: "Target reached!" });
+      }
+    }
+
     // Create a corresponding successful payment record
     let payment = null;
     try {
@@ -76,6 +115,19 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     } catch (payErr) {
       console.error("Failed to create Payment record for donation", donation._id, payErr);
       // Do not fail the request if payment record creation fails
+    }
+
+    // Update donor totals and badge asynchronously (fire-and-forget)
+    try {
+      const Donor = require("../models/Donor");
+      const donor = await Donor.findOne({ DonorID: req.user.donorID });
+      if (donor) {
+        const newTotal = (donor.totalDonations || 0) + numericAmount;
+        const badge = newTotal >= 80000 ? 'Gold' : newTotal >= 40000 ? 'Silver' : newTotal >= 20000 ? 'Bronze' : 'None';
+        await Donor.findByIdAndUpdate(donor._id, { totalDonations: newTotal, badge });
+      }
+    } catch (badgeErr) {
+      console.warn('Failed to update donor badge/total:', badgeErr.message);
     }
 
     return res.json({

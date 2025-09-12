@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { fetchDonorHistory, checkCurrentUser, fetchDonorDetails } from '../api/donations';
+import { fetchDonorHistory, checkCurrentUser, fetchDonorDetails, fetchMyDonorStats, fetchTopDonors } from '../api/donations';
 import { fetchCampaignById } from '../api/campaigns';
 
 const DonorDashboard = () => {
@@ -20,12 +20,19 @@ const DonorDashboard = () => {
   });
   const [refreshing, setRefreshing] = useState(false);
   const [showNewDonationNotification, setShowNewDonationNotification] = useState(false);
+  const [badge, setBadge] = useState('None');
+  const [topDonors, setTopDonors] = useState([]);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [donorName, setDonorName] = useState('');
+
+  // Monthly report state
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [downloadingReport, setDownloadingReport] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,7 +70,12 @@ const DonorDashboard = () => {
         setLoading(true);
       }
 
-      const historyData = await fetchDonorHistory();
+      // Fetch stats and top donors in parallel with history
+      const [historyData, myStats, top] = await Promise.all([
+        fetchDonorHistory(),
+        fetchMyDonorStats().catch(() => null),
+        fetchTopDonors().catch(() => ({ top: [] }))
+      ]);
       console.log('Donation history fetched for token:', token.substring(0, 20) + '...', historyData);
 
       // Fetch campaign details for each monetary donation
@@ -137,6 +149,11 @@ const DonorDashboard = () => {
       setDonationHistory(historyData.monetary);
       setNonMonetaryHistory(historyData.nonMonetary);
 
+      if (myStats) {
+        setBadge(myStats.badge || 'None');
+      }
+      setTopDonors(top.top || []);
+
       // Calculate statistics
       const totalAmount = historyData.monetary.reduce((sum, donation) => sum + donation.amount, 0);
       const currentMonth = new Date().getMonth();
@@ -169,43 +186,37 @@ const DonorDashboard = () => {
     fetchDonorData();
   }, [currentToken]); // Re-fetch when token changes (user logs in/out)
 
-  // Get donor name from localStorage with improved logic
+  // Prefer backend profile name over localStorage fallback
   useEffect(() => {
-    const getDonorName = () => {
+    (async () => {
+      try {
+        const profile = await fetchDonorDetails();
+        if (profile?.donor?.name) {
+          setDonorName(profile.donor.name);
+          return;
+        }
+      } catch (err) {
+        // fall back to localStorage
+      }
+      // Fallback to localStorage if API not available
       const donorData = localStorage.getItem('donorData');
       if (donorData) {
         try {
           const parsedData = JSON.parse(donorData);
-          console.log('Donor data from localStorage:', parsedData);
-
-          // Try different possible field names for the name
           let name = parsedData.name || parsedData.Name || parsedData.fullName;
-
-          // Check if the name is actually an email address
           const isEmail = name && name.includes('@') && name.includes('.');
-
-          // If name looks like an email or is the same as email field, use fallback
           if (isEmail || (name && parsedData.email && name.toLowerCase() === parsedData.email.toLowerCase())) {
-            console.log('Email is being used as name, using fallback');
             name = 'Donor';
           }
-
-          // If still no valid name, use fallback
-          if (!name || name === parsedData.email) {
-            name = 'Donor';
-          }
-
+          if (!name || name === parsedData.email) name = 'Donor';
           setDonorName(name);
-        } catch (error) {
-          console.error('Error parsing donor data:', error);
+        } catch {
           setDonorName('Donor');
         }
       } else {
         setDonorName('Donor');
       }
-    };
-
-    getDonorName();
+    })();
   }, []);
 
   // Auto-refresh when returning from payment success
@@ -248,6 +259,107 @@ const DonorDashboard = () => {
     setShowModal(false);
     setSelectedDonation(null);
     setSelectedCampaign(null);
+  };
+
+  // Handle monthly report download
+  const handleDownloadMonthlyReport = async (format = 'pdf') => {
+    try {
+      setDownloadingReport(true);
+
+      const token = localStorage.getItem('donorToken');
+      if (!token) {
+        alert('Please log in to download reports');
+        return;
+      }
+
+      // Resolve API base URL robustly
+      const getApiBaseUrl = () => {
+        const envUrl = import.meta.env.VITE_API_URL;
+        if (envUrl) {
+          if (envUrl.startsWith('http')) return envUrl.replace(/\/$/, '');
+          if (envUrl.startsWith(':')) {
+            const { protocol, hostname } = window.location;
+            return `${protocol}//${hostname}${envUrl}`.replace(/\/$/, '');
+          }
+          if (envUrl.startsWith('/')) {
+            return `${window.location.origin}${envUrl}`.replace(/\/$/, '');
+          }
+          return envUrl.replace(/\/$/, '');
+        }
+        return 'http://localhost:4000';
+      };
+
+      const baseUrl = getApiBaseUrl();
+
+      const response = await fetch(
+        `${baseUrl}/api/donors/me/donations/monthly?month=${selectedMonth}&year=${selectedYear}&format=${format}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        let message = 'Failed to download report';
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) message = errorData.error;
+        } catch {}
+        throw new Error(message);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Set filename based on format
+      const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { month: 'long' });
+      const extension = format === 'excel' ? 'xlsx' : 'pdf';
+      link.download = `donation-report-${monthName}-${selectedYear}.${extension}`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      alert(`Failed to download report: ${error.message}`);
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
+
+  // Generate month options for the past 12 months
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthValue = date.getMonth() + 1;
+      const yearValue = date.getFullYear();
+      const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      options.push({
+        value: `${monthValue}-${yearValue}`,
+        label: monthName,
+        month: monthValue,
+        year: yearValue
+      });
+    }
+    
+    return options;
   };
 
   // Format date for display
@@ -353,6 +465,18 @@ const DonorDashboard = () => {
   const achievements = calculateAchievements();
   const monthlyProgressPercentage = Math.min((donorStats.monthlyProgress / donorStats.monthlyGoal) * 100, 100);
 
+  // Compute badge from frontend total to guarantee at least Bronze at 20,000
+  const computeBadgeFromAmount = (amount) => {
+    if (amount >= 80000) return 'Gold';
+    if (amount >= 40000) return 'Silver';
+    if (amount >= 20000) return 'Bronze';
+    return 'None';
+  };
+
+  const badgeRank = (b) => (b === 'Gold' ? 3 : b === 'Silver' ? 2 : b === 'Bronze' ? 1 : 0);
+  const computedBadge = computeBadgeFromAmount(donorStats.totalAmount || 0);
+  const finalBadge = badgeRank(computedBadge) > badgeRank(badge) ? computedBadge : badge;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -408,10 +532,12 @@ const DonorDashboard = () => {
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back, {donorName}!</h1>
             <div className="bg-[#e7deb6] text-yellow-900 px-4 py-2 rounded-full font-medium flex items-center space-x-2">
-              <span>{donorStats.totalDonations >= 10 ? 'Gold Donor' : donorStats.totalDonations >= 5 ? 'Silver Donor' : 'Bronze Donor'}</span>
+              <span>{finalBadge !== 'None' ? `${finalBadge} Donor` : 'Donor'}</span>
             </div>
           </div>
         </section>
+
+        
 
         {/* Recent Activity Summary  asd*/}
         <section className="mb-8">
@@ -469,6 +595,132 @@ const DonorDashboard = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Top Donors Table */}
+        <section className="mb-8">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Top Donors</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Donor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Badge</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {topDonors.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-4 text-center text-gray-500 text-sm">No donors yet</td>
+                    </tr>
+                  ) : (
+                    topDonors.map((d, idx) => (
+                      <tr key={d.DonorID}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{idx + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{d.Username?.split('@')[0] || d.DonorID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rs. {(d.totalDonations || 0).toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{d.badge || 'None'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Monthly Report Download Section */}
+        <section className="mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Download Monthly Report</h2>
+              <div className="flex items-center space-x-2 text-blue-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="text-sm font-medium">Export your donation history</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              {/* Month/Year Selector */}
+              <div>
+                <label htmlFor="month-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Month & Year
+                </label>
+                <select
+                  id="month-select"
+                  value={`${selectedMonth}-${selectedYear}`}
+                  onChange={(e) => {
+                    const [month, year] = e.target.value.split('-');
+                    setSelectedMonth(parseInt(month));
+                    setSelectedYear(parseInt(year));
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {generateMonthOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Download Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleDownloadMonthlyReport('pdf')}
+                  disabled={downloadingReport}
+                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
+                >
+                  {downloadingReport ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>PDF</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleDownloadMonthlyReport('excel')}
+                  disabled={downloadingReport}
+                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
+                >
+                  {downloadingReport ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Excel</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Info */}
+              <div className="text-sm text-gray-600">
+                <p className="mb-1">📊 Includes all donations for the selected month</p>
+                <p>📋 Available in PDF and Excel formats</p>
               </div>
             </div>
           </div>

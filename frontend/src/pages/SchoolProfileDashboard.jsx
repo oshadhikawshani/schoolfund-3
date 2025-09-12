@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import schoolfundLogo from "../images/logoskl.jpg";
 import Footer from "../components/Footer";
 import SchoolDonations from "../components/SchoolDonations";
+import SpendingForm from "../components/SpendingForm";
+import api from "../lib/api";
 
 export default function SchoolProfileDashboard() {
   const [school, setSchool] = useState(null);
@@ -15,6 +17,9 @@ export default function SchoolProfileDashboard() {
   const [topDonors, setTopDonors] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [deletingCampaign, setDeletingCampaign] = useState(null);
+  const [showSpendingFor, setShowSpendingFor] = useState(null);
+  const [reportMonth, setReportMonth] = useState("");
+  const [campaignFilter, setCampaignFilter] = useState("all"); // "all", "active", "completed"
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,6 +71,23 @@ export default function SchoolProfileDashboard() {
   const schoolName = school?.Username || school?.name || "School Name";
   const schoolInitial = schoolName[0] || "S";
   const schoolLogoSrc = school?.SchoolLogo ? school.SchoolLogo : schoolfundLogo;
+
+  // Filter campaigns based on status
+  const getFilteredCampaigns = () => {
+    if (campaignFilter === "all") return campaigns;
+    
+    return campaigns.filter(campaign => {
+      const isCompleted = campaign.isClosed || 
+                         (typeof campaign.status === 'string' && campaign.status.toLowerCase() === 'closed') ||
+                         ((campaign.raised || 0) >= (campaign.amount || 0) && (campaign.amount || 0) > 0);
+      
+      if (campaignFilter === "completed") return isCompleted;
+      if (campaignFilter === "active") return !isCompleted;
+      return true;
+    });
+  };
+
+  const filteredCampaigns = getFilteredCampaigns();
 
   const deleteCampaign = async (campaignId) => {
     if (!school?.SchoolRequestID) {
@@ -199,8 +221,11 @@ export default function SchoolProfileDashboard() {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-3xl font-bold text-blue-700">{campaigns.length}</span>
-                <p className="text-blue-600 text-sm mt-1 font-medium">Active Campaigns</p>
+                <span className="text-3xl font-bold text-blue-700">{filteredCampaigns.length}</span>
+                <p className="text-blue-600 text-sm mt-1 font-medium">
+                  {campaignFilter === "all" ? "Total Campaigns" : 
+                   campaignFilter === "active" ? "Active Campaigns" : "Completed Campaigns"}
+                </p>
               </div>
               <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,27 +311,59 @@ export default function SchoolProfileDashboard() {
           </div>
         </div> */}
 
-        {/* Active Campaigns and Recent Expenses */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center">
-                <h3 className="text-xl font-bold text-gray-800">Active Campaigns</h3>
+        {/* Campaigns Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <h3 className="text-xl font-bold text-gray-800">Campaigns</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCampaignFilter("all")}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                    campaignFilter === "all" 
+                      ? "bg-blue-600 text-white shadow-md" 
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setCampaignFilter("active")}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                    campaignFilter === "active" 
+                      ? "bg-green-600 text-white shadow-md" 
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setCampaignFilter("completed")}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                    campaignFilter === "completed" 
+                      ? "bg-purple-600 text-white shadow-md" 
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  Completed
+                </button>
               </div>
-              <button
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center"
-                onClick={() => navigate("/school-create-campaign")}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Campaign
-              </button>
             </div>
-            <div className="space-y-4">
-              {campaigns && campaigns.length > 0 ? (
-                campaigns.map((c, idx) => {
+            <button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center"
+              onClick={() => navigate("/school-create-campaign")}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Campaign
+            </button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredCampaigns && filteredCampaigns.length > 0 ? (
+              filteredCampaigns.map((c, idx) => {
                   const percent = c.amount ? Math.round(((c.raised || 0) / c.amount) * 100) : 0;
+                  const isClosedLocal = Boolean(c.isClosed || (typeof c.status === 'string' && c.status.toLowerCase() === 'closed') || ((c.raised || 0) >= (c.amount || 0) && (c.amount || 0) > 0));
                   return (
                     <div key={idx} className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-102">
                       <div className="flex justify-between items-start mb-3">
@@ -330,7 +387,21 @@ export default function SchoolProfileDashboard() {
                       <div className="text-gray-600 text-sm font-medium">
                         Rs {(c.raised || 0).toLocaleString()} raised of Rs.{(c.amount || 0).toLocaleString()}
                       </div>
-                      <div className="flex justify-end mt-4">
+                      <div className="flex justify-end mt-4 gap-2">
+                        <button
+                          onClick={() => {
+                            if (!isClosedLocal) {
+                              alert('This campaign is not closed yet. You can record spending after it is closed.');
+                              return;
+                            }
+                            setShowSpendingFor(c);
+                          }}
+                          disabled={!isClosedLocal}
+                          title={isClosedLocal ? 'Record spending for this closed campaign' : 'Available after campaign is closed'}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${isClosedLocal ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+                        >
+                          Record Spending
+                        </button>
                         <button
                           onClick={() => deleteCampaign(c._id)}
                           className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-200 flex items-center gap-1 ${
@@ -370,55 +441,67 @@ export default function SchoolProfileDashboard() {
                   );
                 })
               ) : (
-                <div className="text-center py-12">
+                <div className="col-span-full text-center py-12">
                   <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <p className="text-gray-500 font-medium text-lg">No active campaigns</p>
-                  <p className="text-gray-400 text-sm mt-1">Create your first campaign to get started</p>
+                  <p className="text-gray-500 font-medium text-lg">
+                    {campaignFilter === "all" ? "No campaigns found" :
+                     campaignFilter === "active" ? "No active campaigns" : "No completed campaigns"}
+                  </p>
+                  <p className="text-gray-400 text-sm mt-1">
+                    {campaignFilter === "all" ? "Create your first campaign to get started" :
+                     campaignFilter === "active" ? "All campaigns are completed" : "No campaigns have been completed yet"}
+                  </p>
                 </div>
               )}
-            </div>
           </div>
-
-          {/* <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center mb-6">
-
-              <h3 className="text-xl font-bold text-gray-800">Recent Expenses</h3>
-            </div>
-            <div className="space-y-3">
-              {expenses && expenses.length > 0 ? (
-                expenses.map((e, idx) => (
-                  <div key={idx} className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-all duration-200">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-800">{e.title || e.name || "Expense"}</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${e.status === "Pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                        }`}>
-                        {e.status || "Status"}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-gray-500 font-medium text-lg">Coming Soon</p>
-                  <p className="text-gray-400 text-sm mt-1">Expense tracking will be available soon</p>
-                </div>
-              )}
-            </div>
-          </div> */}
         </div>
 
         {/* Donations Received */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-all duration-300 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-800">Donations Received</h3>
+            <div className="flex items-center gap-2">
+              <input
+                type="month"
+                value={reportMonth}
+                onChange={(e) => setReportMonth(e.target.value)}
+                className="border rounded px-2 py-1"
+              />
+              <button
+                onClick={async () => {
+                  if (!school?.SchoolRequestID) return;
+                  const month = reportMonth || new Date().toISOString().slice(0,7);
+                  const url = `${api.defaults.baseURL}/api/schools/${school.SchoolRequestID}/expense-report?month=${month}`;
+                  window.open(url, '_blank');
+                }}
+                className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+              >
+                Download Expense Report
+              </button>
+            </div>
+          </div>
           <SchoolDonations schoolID={school?.SchoolRequestID} />
         </div>
       </main>
+
+      {/* Spending Modal */}
+      {showSpendingFor && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Record Spending - {showSpendingFor.campaignName}</h3>
+              <button onClick={() => setShowSpendingFor(null)} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            <SpendingForm
+              campaignId={showSpendingFor._id}
+              schoolId={school?.SchoolRequestID}
+              onSubmitted={() => setShowSpendingFor(null)}
+            />
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
