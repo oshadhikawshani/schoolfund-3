@@ -46,10 +46,34 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     const visLabel = isAnon ? "Anonymous" : "Public";
 
     // Fetch campaign and enforce closure rules
-    const campaign = await Campaign.findById(campaignID).lean();
+    // Try to find campaign by MongoDB _id first, then by custom campaignID string
+    let campaign = null;
+    
+    // Try to find by MongoDB ObjectId first
+    if (campaignID.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log("Attempting to find campaign by ObjectId:", campaignID);
+      campaign = await Campaign.findById(campaignID).lean();
+      if (campaign) {
+        console.log("Found campaign by ObjectId:", campaign._id);
+      }
+    }
+    
+    // If not found by ObjectId, try to find by custom campaignID string
     if (!campaign) {
+      console.log("Attempting to find campaign by campaignID string:", campaignID);
+      campaign = await Campaign.findOne({ campaignID: campaignID }).lean();
+      if (campaign) {
+        console.log("Found campaign by campaignID:", campaign.campaignID);
+      }
+    }
+    
+    if (!campaign) {
+      console.log("Campaign not found for ID:", campaignID);
       return res.status(404).json({ message: "Campaign not found" });
     }
+    
+    // Use the campaign's MongoDB _id for the donation record
+    const campaignObjectId = campaign._id;
 
     // Only enforce for monetary campaigns
     if (campaign.monetaryType === "Monetary") {
@@ -61,7 +85,7 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     // Create donation record as immediately paid
     const donationData = {
       donorID: req.user.donorID, // Use donorID from JWT token
-      campaignID,
+      campaignID: campaignObjectId, // Use the campaign's MongoDB _id
       amount: numericAmount,
       visibility: visLabel,
       status: "paid",
@@ -78,7 +102,7 @@ router.post("/monetary", verifyDonorAuth, async (req, res) => {
     // If monetary campaign, atomically increment raised and close if target reached
     if (campaign.monetaryType === "Monetary") {
       const updated = await Campaign.findOneAndUpdate(
-        { _id: campaignID, isClosed: { $ne: true } },
+        { _id: campaignObjectId, isClosed: { $ne: true } },
         [
           {
             $set: {
@@ -190,11 +214,40 @@ router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req,
 
     // Import the NonMonetaryDonation model
     const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+    
+    // Find the campaign to get its MongoDB _id
+    let campaign = null;
+    
+    // Try to find by MongoDB ObjectId first
+    if (campaignID.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log("Non-monetary: Attempting to find campaign by ObjectId:", campaignID);
+      campaign = await Campaign.findById(campaignID).lean();
+      if (campaign) {
+        console.log("Non-monetary: Found campaign by ObjectId:", campaign._id);
+      }
+    }
+    
+    // If not found by ObjectId, try to find by custom campaignID string
+    if (!campaign) {
+      console.log("Non-monetary: Attempting to find campaign by campaignID string:", campaignID);
+      campaign = await Campaign.findOne({ campaignID: campaignID }).lean();
+      if (campaign) {
+        console.log("Non-monetary: Found campaign by campaignID:", campaign.campaignID);
+      }
+    }
+    
+    if (!campaign) {
+      console.log("Non-monetary: Campaign not found for ID:", campaignID);
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+    
+    // Use the campaign's MongoDB _id for the donation record
+    const campaignObjectId = campaign._id;
 
     // Create non-monetary donation record
     const donationData = {
       donorID: req.user.donorID,
-      campaignID,
+      campaignID: campaignObjectId, // Use the campaign's MongoDB _id
       deliveryMethod,
       deadlineDate: deadlineDate || null,
       notes: notes || null,
@@ -237,54 +290,144 @@ router.get("/history", verifyDonorAuth, async (req, res) => {
   try {
     // Use donorID from JWT token as the primary identifier for querying donations
     const donorIdentifier = req.user.donorID;
-    
-    console.log("Fetching history for donor:", { 
-      donorID: donorIdentifier, 
+
+    console.log("Fetching history for donor:", {
+      donorID: donorIdentifier,
       userId: req.user.id,
       token: req.headers.authorization ? req.headers.authorization.substring(0, 30) + '...' : 'No token'
     });
 
-    // Search for donations using donorID (string format)
-    const monetary = await MonetaryDonation.find({ donorID: donorIdentifier })
-      .sort({ createdAt: -1 })
-      .lean();
+    // Use aggregation pipeline to join campaigns with monetary donations in single query
+    const monetaryAggregation = await MonetaryDonation.aggregate([
+      { $match: { donorID: donorIdentifier } },
+      {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignID',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      {
+        $lookup: {
+          from: 'payments',
+          localField: '_id',
+          foreignField: 'monetaryID',
+          as: 'payment'
+        }
+      },
+      {
+        $addFields: {
+          campaign: { $arrayElemAt: ['$campaign', 0] },
+          payment: { $arrayElemAt: ['$payment', 0] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
 
-    console.log(`Found ${monetary.length} monetary donations for donor ${donorIdentifier}`);
-
-    const payments = await Payment.find({ monetaryID: { $in: monetary.map((d) => d._id) } }).lean();
-    const byId = new Map(payments.map((p) => [String(p.monetaryID), p]));
-
-    const monetaryWithPayment = monetary.map((d) => {
-      const pay = byId.get(String(d._id));
-      return {
+    console.log(`Found ${monetaryAggregation.length} monetary donations for donor ${donorIdentifier}`);
+    
+    // Debug: Log the aggregation results to see campaign data
+    monetaryAggregation.forEach((d, index) => {
+      console.log(`Donation ${index + 1}:`, {
         _id: d._id,
         campaignID: d.campaignID,
-        amount: d.amount,
-        visibility: d.visibility,
-        status: d.status,
-        createdAt: d.createdAt,
-        payment: pay
-          ? {
-            transactionID: pay.transactionID,
-            amountPaid: pay.amountPaid,
-            method: pay.method,
-            paidAt: pay.paidAt,
-            receiptURL: pay.receiptURL,
-            paymentStatus: pay.paymentStatus,
-          }
-          : null,
-      };
+        campaignIDType: typeof d.campaignID,
+        campaignData: d.campaign ? 'Found' : 'Missing',
+        campaignId: d.campaign ? d.campaign._id : 'N/A',
+        campaignName: d.campaign ? d.campaign.campaignName : 'N/A'
+      });
     });
 
-    // Fetch non-monetary donations
+    // Transform the aggregated data to match expected format
+    const monetaryWithPaymentAndCampaign = monetaryAggregation.map((d) => ({
+      _id: d._id,
+      campaignID: d.campaignID,
+      amount: d.amount,
+      visibility: d.visibility,
+      status: d.status,
+      createdAt: d.createdAt,
+      message: d.message,
+      campaign: d.campaign ? {
+        _id: d.campaign._id,
+        campaignName: d.campaign.campaignName,
+        description: d.campaign.description,
+        category: d.campaign.category,
+        status: d.campaign.status,
+        schoolName: d.campaign.schoolName,
+        location: d.campaign.location,
+        amount: d.campaign.amount,
+        raised: d.campaign.raised,
+        targetAmount: d.campaign.amount,
+        raisedAmount: d.campaign.raised
+      } : null,
+      payment: d.payment ? {
+        transactionID: d.payment.transactionID,
+        amountPaid: d.payment.amountPaid,
+        method: d.payment.method,
+        paidAt: d.payment.paidAt,
+        receiptURL: d.payment.receiptURL,
+        paymentStatus: d.payment.paymentStatus,
+      } : null,
+    }));
+
+    // Use aggregation pipeline for non-monetary donations as well
     const NonMonetaryDonation = require("../models/NonMonetaryDonation");
-    const nonMonetary = await NonMonetaryDonation.find({ donorID: donorIdentifier })
-      .sort({ createdAt: -1 })
-      .lean();
+    const nonMonetaryAggregation = await NonMonetaryDonation.aggregate([
+      { $match: { donorID: donorIdentifier } },
+      {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignID',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      {
+        $addFields: {
+          campaign: { $arrayElemAt: ['$campaign', 0] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
 
-    console.log(`Found ${nonMonetary.length} non-monetary donations for donor ${donorIdentifier}`);
+    console.log(`Found ${nonMonetaryAggregation.length} non-monetary donations for donor ${donorIdentifier}`);
 
-    return res.json({ monetary: monetaryWithPayment, nonMonetary });
+    // Transform non-monetary data to include campaign details
+    const nonMonetaryWithCampaign = nonMonetaryAggregation.map((d) => ({
+      _id: d._id,
+      campaignID: d.campaignID,
+      deliveryMethod: d.deliveryMethod,
+      deadlineDate: d.deadlineDate,
+      notes: d.notes,
+      courierRef: d.courierRef,
+      imagePath: d.imagePath,
+      quantity: d.quantity,
+      status: d.status,
+      createdAt: d.createdAt,
+      campaign: d.campaign ? {
+        _id: d.campaign._id,
+        campaignName: d.campaign.campaignName,
+        description: d.campaign.description,
+        category: d.campaign.category,
+        status: d.campaign.status,
+        schoolName: d.campaign.schoolName,
+        location: d.campaign.location,
+        amount: d.campaign.amount,
+        raised: d.campaign.raised,
+        targetAmount: d.campaign.amount,
+        raisedAmount: d.campaign.raised
+      } : null
+    }));
+
+    // Set cache headers for better performance (5 minutes cache)
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.setHeader('ETag', `"${donorIdentifier}-${Date.now().toString(36)}"`);
+
+    return res.json({
+      monetary: monetaryWithPaymentAndCampaign,
+      nonMonetary: nonMonetaryWithCampaign
+    });
   } catch (e) {
     console.error("History error:", e);
     return res.status(500).json({ message: e.message });
@@ -417,6 +560,87 @@ router.post("/migrate/donations", verifyDonorAuth, async (req, res) => {
   }
 });
 
+// ---------------- Migration endpoint to fix campaign IDs in donations ----------------
+router.post("/migrate/campaign-ids", verifyDonorAuth, async (req, res) => {
+  try {
+    console.log("Migration: Starting campaign ID migration for donations");
+
+    // Find all monetary donations
+    const monetaryDonations = await MonetaryDonation.find().lean();
+    console.log("Total monetary donations to check:", monetaryDonations.length);
+
+    // Find all non-monetary donations
+    const NonMonetaryDonation = require("../models/NonMonetaryDonation");
+    const nonMonetaryDonations = await NonMonetaryDonation.find().lean();
+    console.log("Total non-monetary donations to check:", nonMonetaryDonations.length);
+
+    let migratedCount = 0;
+    let errors = [];
+
+    // Process monetary donations
+    for (const donation of monetaryDonations) {
+      try {
+        // Check if campaignID is a string (custom campaignID) instead of ObjectId
+        if (typeof donation.campaignID === 'string' && !donation.campaignID.match(/^[0-9a-fA-F]{24}$/)) {
+          console.log(`Found donation with string campaignID: ${donation._id}, campaignID: ${donation.campaignID}`);
+          
+          // Find campaign by custom campaignID string
+          const campaign = await Campaign.findOne({ campaignID: donation.campaignID }).lean();
+          if (campaign) {
+            // Update donation to use campaign's MongoDB _id
+            await MonetaryDonation.findByIdAndUpdate(donation._id, {
+              campaignID: campaign._id
+            });
+            migratedCount++;
+            console.log(`Migrated monetary donation ${donation._id} from campaignID "${donation.campaignID}" to ObjectId ${campaign._id}`);
+          } else {
+            errors.push(`Campaign not found for monetary donation ${donation._id} with campaignID "${donation.campaignID}"`);
+          }
+        }
+      } catch (err) {
+        errors.push(`Failed to migrate monetary donation ${donation._id}: ${err.message}`);
+      }
+    }
+
+    // Process non-monetary donations
+    for (const donation of nonMonetaryDonations) {
+      try {
+        // Check if campaignID is a string (custom campaignID) instead of ObjectId
+        if (typeof donation.campaignID === 'string' && !donation.campaignID.match(/^[0-9a-fA-F]{24}$/)) {
+          console.log(`Found non-monetary donation with string campaignID: ${donation._id}, campaignID: ${donation.campaignID}`);
+          
+          // Find campaign by custom campaignID string
+          const campaign = await Campaign.findOne({ campaignID: donation.campaignID }).lean();
+          if (campaign) {
+            // Update donation to use campaign's MongoDB _id
+            await NonMonetaryDonation.findByIdAndUpdate(donation._id, {
+              campaignID: campaign._id
+            });
+            migratedCount++;
+            console.log(`Migrated non-monetary donation ${donation._id} from campaignID "${donation.campaignID}" to ObjectId ${campaign._id}`);
+          } else {
+            errors.push(`Campaign not found for non-monetary donation ${donation._id} with campaignID "${donation.campaignID}"`);
+          }
+        }
+      } catch (err) {
+        errors.push(`Failed to migrate non-monetary donation ${donation._id}: ${err.message}`);
+      }
+    }
+
+    console.log(`Campaign ID migration completed. Migrated: ${migratedCount}, Errors: ${errors.length}`);
+
+    return res.json({
+      success: true,
+      migratedCount,
+      errorCount: errors.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (e) {
+    console.error("Campaign ID migration error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
 // ---------------- Test endpoint to verify donation functionality ----------------
 router.get("/test/donation-flow", verifyDonorAuth, async (req, res) => {
   try {
@@ -503,6 +727,126 @@ router.get("/debug/nonmonetary", verifyDonorAuth, async (req, res) => {
     });
   } catch (e) {
     console.error("Debug non-monetary error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+// Debug endpoint to check specific donation and its campaign
+router.get("/debug/donation/:donationId", verifyDonorAuth, async (req, res) => {
+  try {
+    const donationId = req.params.donationId;
+    console.log("Debug: Checking donation:", donationId);
+
+    // Find the donation
+    const donation = await MonetaryDonation.findById(donationId).lean();
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found" });
+    }
+
+    console.log("Donation found:", {
+      _id: donation._id,
+      campaignID: donation.campaignID,
+      campaignIDType: typeof donation.campaignID,
+      donorID: donation.donorID
+    });
+
+    // Try to find the campaign using the campaignID
+    const campaign = await Campaign.findById(donation.campaignID).lean();
+    console.log("Campaign lookup result:", campaign ? {
+      _id: campaign._id,
+      campaignName: campaign.campaignName
+    } : 'Campaign not found');
+
+    // Test aggregation pipeline for this specific donation
+    const aggregation = await MonetaryDonation.aggregate([
+      { $match: { _id: new require('mongoose').Types.ObjectId(donationId) } },
+      {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignID',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      {
+        $addFields: {
+          campaign: { $arrayElemAt: ['$campaign', 0] }
+        }
+      }
+    ]);
+
+    console.log("Aggregation result:", JSON.stringify(aggregation[0], null, 2));
+
+    return res.json({
+      success: true,
+      donation: {
+        _id: donation._id,
+        campaignID: donation.campaignID,
+        campaignIDType: typeof donation.campaignID,
+        donorID: donation.donorID
+      },
+      directCampaignLookup: campaign,
+      aggregationResult: aggregation[0]
+    });
+  } catch (e) {
+    console.error("Debug donation error:", e);
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+// Simple debug endpoint to check latest donation
+router.get("/debug/latest", verifyDonorAuth, async (req, res) => {
+  try {
+    const donorIdentifier = req.user.donorID;
+    
+    // Get the latest monetary donation
+    const latestDonation = await MonetaryDonation.findOne({ donorID: donorIdentifier })
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    if (!latestDonation) {
+      return res.json({ message: "No donations found" });
+    }
+    
+    // Try to find the campaign
+    const campaign = await Campaign.findById(latestDonation.campaignID).lean();
+    
+    // Test aggregation for this specific donation
+    const aggregation = await MonetaryDonation.aggregate([
+      { $match: { _id: latestDonation._id } },
+      {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignID',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      {
+        $addFields: {
+          campaign: { $arrayElemAt: ['$campaign', 0] }
+        }
+      }
+    ]);
+    
+    return res.json({
+      latestDonation: {
+        _id: latestDonation._id,
+        campaignID: latestDonation.campaignID,
+        campaignIDType: typeof latestDonation.campaignID,
+        createdAt: latestDonation.createdAt
+      },
+      directCampaignLookup: campaign ? {
+        _id: campaign._id,
+        campaignName: campaign.campaignName
+      } : null,
+      aggregationResult: aggregation[0] ? {
+        campaignFound: !!aggregation[0].campaign,
+        campaignName: aggregation[0].campaign?.campaignName || 'N/A'
+      } : null
+    });
+  } catch (e) {
+    console.error("Debug latest error:", e);
     return res.status(500).json({ message: e.message });
   }
 });

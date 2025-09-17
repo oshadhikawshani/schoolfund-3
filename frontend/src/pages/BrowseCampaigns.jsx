@@ -4,7 +4,7 @@ import { fetchCampaigns as apiFetchCampaigns } from "../api/campaigns";
 import { categories, categoryMap, getCategoryDisplayName } from "../config/categories";
 import api from "../lib/api";
 
-// 👇 use the existing logo image as fallback
+// use the existing logo image as fallback
 const FALLBACK = "/logoskl.jpg";
 
 
@@ -251,6 +251,12 @@ export default function BrowseCampaigns() {
   // Apply filters and sort by location
   useEffect(() => {
     let filtered = [...allCampaigns];
+
+    // Exclude campaigns with 0 or fewer days left
+    filtered = filtered.filter(campaign => {
+      const days = getDaysRemaining(campaign.deadline);
+      return Number.isNaN(days) || days > 0;
+    });
 
     // Filter by search query
     if (searchQuery.trim() !== "") {

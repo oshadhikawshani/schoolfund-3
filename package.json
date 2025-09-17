@@ -1,0 +1,26 @@
+{
+  "name": "schoolfund-mcp",
+  "version": "1.0.0",
+  "description": "SchoolFund project with Playwright MCP server integration",
+  "main": "index.js",
+  "scripts": {
+    "mcp:playwright": "npx @playwright/mcp@latest",
+    "mcp:headed": "npx @playwright/mcp@latest --headless false",
+    "mcp:chrome": "npx @playwright/mcp@latest --browser chrome",
+    "install:playwright": "npx playwright install",
+    "test:mcp": "node claude/test-mcp.js",
+    "test:mcp-server": "echo 'Run: npx @playwright/mcp@latest --help to verify MCP server'",
+    "test:all": "node claude/run-tests.js",
+    "test:f1": "node claude/test-f1-campaign-closure.js",
+    "test:f2": "node claude/test-f2-donor-badges.js",
+    "test:campaign": "node claude/run-tests.js f1",
+    "test:badges": "node claude/run-tests.js f2"
+  },
+  "keywords": ["playwright", "mcp", "schoolfund", "automation"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/mcp": "latest",
+    "playwright": "^1.47.0"
+  }
+}
