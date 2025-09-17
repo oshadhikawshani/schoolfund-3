@@ -835,6 +835,7 @@ Latest Donation Debug:
                 </div>
               )}
             </div>
+            {/* Debug buttons - remove after fixing */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleRefresh}
@@ -846,19 +847,7 @@ Latest Donation Debug:
                 </svg>
                 <span>Refresh</span>
               </button>
-              {/* Debug buttons - remove after fixing */}
-              <button
-                onClick={debugLatestDonation}
-                className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
-              >
-                Debug Latest
-              </button>
-              <button
-                onClick={runMigration}
-                className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
-              >
-                Fix Campaign IDs
-              </button>
+              
             </div>
           </div>
 
