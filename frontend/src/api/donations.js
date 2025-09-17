@@ -1,10 +1,13 @@
 import api from '../lib/api';
 
-export const fetchDonorHistory = async () => {
+export const fetchDonorHistory = async (forceRefresh = false) => {
   try {
-    // Add cache-busting parameter to prevent caching
-    const timestamp = Date.now();
-    const response = await api.get(`/api/donations/history?t=${timestamp}`);
+    // Only add cache-busting when explicitly requested (e.g., after new donation)
+    const url = forceRefresh
+      ? `/api/donations/history?t=${Date.now()}`
+      : '/api/donations/history';
+
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching donor history:', error);

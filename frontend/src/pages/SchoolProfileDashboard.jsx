@@ -4,6 +4,7 @@ import schoolfundLogo from "../images/logoskl.jpg";
 import Footer from "../components/Footer";
 import SchoolDonations from "../components/SchoolDonations";
 import SpendingForm from "../components/SpendingForm";
+import MonthCalendar from "../components/MonthCalendar";
 import api from "../lib/api";
 
 export default function SchoolProfileDashboard() {
@@ -463,11 +464,10 @@ export default function SchoolProfileDashboard() {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-gray-800">Donations Received</h3>
             <div className="flex items-center gap-2">
-              <input
-                type="month"
+              <MonthCalendar
                 value={reportMonth}
-                onChange={(e) => setReportMonth(e.target.value)}
-                className="border rounded px-2 py-1"
+                onChange={setReportMonth}
+                className="min-w-[200px]"
               />
               <button
                 onClick={async () => {

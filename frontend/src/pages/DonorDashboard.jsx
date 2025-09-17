@@ -72,64 +72,61 @@ const DonorDashboard = () => {
 
       // Fetch stats and top donors in parallel with history
       const [historyData, myStats, top] = await Promise.all([
-        fetchDonorHistory(),
+        fetchDonorHistory(showRefreshIndicator), // Force refresh when explicitly requested
         fetchMyDonorStats().catch(() => null),
         fetchTopDonors().catch(() => ({ top: [] }))
       ]);
       console.log('Donation history fetched for token:', token.substring(0, 20) + '...', historyData);
 
-      // Fetch campaign details for each monetary donation
-      const campaignPromises = historyData.monetary.map(async (donation) => {
-        try {
-          console.log('Processing monetary donation:', {
-            donationId: donation._id,
-            campaignID: donation.campaignID,
-            campaignIDType: typeof donation.campaignID
-          });
-          const campaign = await fetchCampaignById(donation.campaignID);
-          return { donationId: donation._id, campaign };
-        } catch (err) {
-          console.warn(`Failed to fetch campaign ${donation.campaignID}:`, err);
-          return { donationId: donation._id, campaign: null };
-        }
-      });
-
-      // Fetch campaign details for each non-monetary donation
-      const nonMonetaryCampaignPromises = historyData.nonMonetary.map(async (donation) => {
-        try {
-          console.log('Processing non-monetary donation:', {
-            donationId: donation._id,
-            campaignID: donation.campaignID,
-            campaignIDType: typeof donation.campaignID
-          });
-          const campaign = await fetchCampaignById(donation.campaignID);
-          return { donationId: donation._id, campaign };
-        } catch (err) {
-          console.warn(`Failed to fetch campaign ${donation.campaignID}:`, err);
-          return { donationId: donation._id, campaign: null };
-        }
-      });
-
-      const [campaignResults, nonMonetaryCampaignResults] = await Promise.all([
-        Promise.all(campaignPromises),
-        Promise.all(nonMonetaryCampaignPromises)
-      ]);
-
+      // Campaign data is now included in the history response for most items.
+      // For any missing campaigns, fetch them in parallel and then set state once
       const campaignsMap = {};
-      campaignResults.forEach(({ donationId, campaign }) => {
-        if (campaign) {
-          campaignsMap[donationId] = campaign;
-        } else {
-          console.warn(`Campaign data missing for donation ${donationId}`);
+      const missingPairs = [];
+      const missingIdsSet = new Set();
+
+      // Map monetary donations with their included campaign data
+      historyData.monetary.forEach((donation) => {
+        if (donation.campaign) {
+          campaignsMap[donation._id] = donation.campaign;
+        } else if (donation.campaignID) {
+          missingPairs.push({ donationId: donation._id, campaignID: donation.campaignID });
+          missingIdsSet.add(String(donation.campaignID));
         }
       });
-      nonMonetaryCampaignResults.forEach(({ donationId, campaign }) => {
-        if (campaign) {
-          campaignsMap[donationId] = campaign;
-        } else {
-          console.warn(`Campaign data missing for donation ${donationId}`);
+
+      // Map non-monetary donations with their included campaign data
+      historyData.nonMonetary.forEach((donation) => {
+        if (donation.campaign) {
+          campaignsMap[donation._id] = donation.campaign;
+        } else if (donation.campaignID) {
+          missingPairs.push({ donationId: donation._id, campaignID: donation.campaignID });
+          missingIdsSet.add(String(donation.campaignID));
         }
       });
+
+      if (missingIdsSet.size > 0) {
+        const missingIds = Array.from(missingIdsSet);
+        const fetchedResults = await Promise.all(
+          missingIds.map(async (id) => {
+            try {
+              const campaign = await fetchCampaignById(id);
+              return [String(id), campaign];
+            } catch (err) {
+              console.warn('Failed to fetch campaign by id', id, err);
+              return [String(id), null];
+            }
+          })
+        );
+        const campaignsById = Object.fromEntries(fetchedResults);
+
+        // Attach fetched campaigns back to donations
+        missingPairs.forEach(({ donationId, campaignID }) => {
+          const campaign = campaignsById[String(campaignID)];
+          if (campaign) {
+            campaignsMap[donationId] = campaign;
+          }
+        });
+      }
 
       setCampaigns(campaignsMap);
 
@@ -236,6 +233,62 @@ const DonorDashboard = () => {
   // Manual refresh function
   const handleRefresh = () => {
     fetchDonorData(true);
+  };
+
+  // Migration function (temporary)
+  const runMigration = async () => {
+    try {
+      const token = localStorage.getItem('donorToken');
+      // Use the correct API base URL for local development
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiBaseUrl}/api/donations/migrate/campaign-ids`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Migration result:', result);
+      alert(`Migration completed! Migrated: ${result.migratedCount}, Errors: ${result.errorCount}`);
+      // Refresh data after migration
+      fetchDonorData(true);
+    } catch (error) {
+      console.error('Migration error:', error);
+      alert('Migration failed: ' + error.message);
+    }
+  };
+
+  // Debug function to check current donation data
+  const debugLatestDonation = () => {
+    console.log('=== DONATION DEBUG INFO ===');
+    console.log('Donation History:', donationHistory);
+    console.log('Non-Monetary History:', nonMonetaryHistory);
+    console.log('Campaigns Map:', campaigns);
+    
+    if (donationHistory.length > 0) {
+      const latestDonation = donationHistory[0];
+      console.log('Latest Monetary Donation:', latestDonation);
+      console.log('Latest Campaign Data:', campaigns[latestDonation._id]);
+      
+      const debugInfo = `
+Latest Donation Debug:
+- Donation ID: ${latestDonation._id}
+- Campaign ID: ${latestDonation.campaignID}
+- Campaign ID Type: ${typeof latestDonation.campaignID}
+- Campaign Found: ${campaigns[latestDonation._id] ? 'Yes' : 'No'}
+- Campaign Name: ${campaigns[latestDonation._id]?.campaignName || 'N/A'}
+      `.trim();
+      
+      alert(debugInfo);
+    } else {
+      alert('No monetary donations found');
+    }
   };
 
   // Handle opening donation report modal
@@ -792,6 +845,19 @@ const DonorDashboard = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>Refresh</span>
+              </button>
+              {/* Debug buttons - remove after fixing */}
+              <button
+                onClick={debugLatestDonation}
+                className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+              >
+                Debug Latest
+              </button>
+              <button
+                onClick={runMigration}
+                className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
+              >
+                Fix Campaign IDs
               </button>
             </div>
           </div>
