@@ -473,13 +473,25 @@ export default function SchoolProfileDashboard() {
                 onClick={async () => {
                   if (!school?.SchoolRequestID) return;
                   const month = reportMonth || new Date().toISOString().slice(0,7);
-                  // Use local backend for donations report since we added the endpoint there
-                  const url = `http://localhost:4000/api/schools/${school.SchoolRequestID}/donations-report?month=${month}&format=excel`;
+                  // Use the configured API base URL
+                  const baseUrl = import.meta.env.VITE_API_URL || "https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev";
+                  const url = `${baseUrl}/api/schools/${school.SchoolRequestID}/donations-report?month=${month}&format=excel`;
                   
                   try {
-                    const response = await fetch(url);
+                    // Get authentication token
+                    const token = localStorage.getItem('schoolToken') || localStorage.getItem('token');
+                    
+                    const response = await fetch(url, {
+                      method: 'GET',
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                      },
+                    });
+                    
                     if (!response.ok) {
-                      alert('Failed to download report');
+                      const errorData = await response.json().catch(() => ({}));
+                      alert(`Failed to download report: ${errorData.error || 'Unknown error'}`);
                       return;
                     }
                     
