@@ -8,7 +8,7 @@ import BackButton from "../components/BackButton";
 const API = import.meta.env.VITE_API_URL || "https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState("");
@@ -23,18 +23,18 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage("");
 
-    if (!email || !password) {
+    if (!username || !password) {
       setMessage("Please enter both username and password");
       return;
     }
 
-    console.log('Attempting school login with:', { username: email, password: password ? '***' : 'missing' });
+    console.log('Attempting school login with:', { username: username, password: password ? '***' : 'missing' });
 
     try {
       const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ username: username, password }),
         credentials: "include"
       });
       const data = await response.json();
@@ -87,7 +87,7 @@ export default function LoginPage() {
       localStorage.removeItem("schoolToken");
       localStorage.removeItem("principalToken");
       
-      const res = await axios.post(`${API}/api/donors/login`, { email, password }, {
+      const res = await axios.post(`${API}/api/donors/login`, { email: username, password }, {
         withCredentials: true,
       });
       
@@ -164,18 +164,18 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <form className="space-y-6">
-          {/* Email/Username Input */}
+          {/* Username Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {loginType === "school" ? "Username" : "Email Address"}
+              Username
             </label>
             <input
-              type={loginType === "school" ? "text" : "email"}
+              type="text"
               required
-              placeholder={loginType === "school" ? "Enter your username" : "you@example.com"}
+              placeholder="Enter your username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
