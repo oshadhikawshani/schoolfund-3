@@ -28,6 +28,7 @@ const DonorDashboard = () => {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [donorName, setDonorName] = useState('');
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
 
   // Monthly report state
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -584,9 +585,14 @@ Latest Donation Debug:
         <section className="mb-8">
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Welcome back, {donorName}!</h1>
-            <div className="bg-[#e7deb6] text-yellow-900 px-4 py-2 rounded-full font-medium flex items-center space-x-2">
-              <span>{finalBadge !== 'None' ? `${finalBadge} Donor` : 'Donor'}</span>
-            </div>
+             <div className={`px-4 py-2 rounded-full font-medium flex items-center space-x-2 ${
+               finalBadge === 'Gold' ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900' :
+               finalBadge === 'Silver' ? 'bg-gradient-to-r from-gray-300 to-slate-400 text-gray-800' :
+               finalBadge === 'Bronze' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-amber-900' :
+               'bg-[#e7deb6] text-yellow-900'
+             }`}>
+               <span>{finalBadge !== 'None' ? `${finalBadge} Donor` : 'Donor'}</span>
+             </div>
           </div>
         </section>
 
@@ -650,6 +656,283 @@ Latest Donation Debug:
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Donor Badges Section */}
+        <section className="mb-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Unlock Your Donor Badges</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Earn badges by contributing more and unlock exclusive rewards to amplify your impact on schools.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Bronze Badge Card */}
+            <div className={`relative bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 ${finalBadge === 'Bronze' ? 'ring-4 ring-amber-300 ring-opacity-50' : ''}`}>
+              {finalBadge === 'Bronze' && (
+                <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Current Level
+                </div>
+              )}
+              
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 relative">
+                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-4xl animate-pulse">
+                    🥉
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-300 to-orange-400 rounded-full opacity-0 hover:opacity-30 transition-opacity duration-300"></div>
+                </div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-amber-700 to-orange-700 bg-clip-text text-transparent">
+                  Bronze Donor
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-amber-800 mb-2">How to Unlock</h4>
+                  <p className="text-sm text-amber-700">
+                    Donate over Rs. 20,000 in monetary contributions or more than 100 non-monetary items/pledges.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-amber-800 mb-3">Rewards</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-center text-sm text-amber-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Priority support for campaigns
+                    </li>
+                    <li className="flex items-center text-sm text-amber-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Monthly impact reports
+                    </li>
+                    <li className="flex items-center text-sm text-amber-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Bronze donor certificate
+                    </li>
+                    <li className="flex items-center text-sm text-amber-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Early access to new campaigns
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                {finalBadge === 'Bronze' ? (
+                  <div className="flex items-center justify-center space-x-2 text-green-600">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-semibold">Achieved!</span>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex justify-between text-sm text-amber-700 mb-2">
+                      <span>Progress to Bronze</span>
+                      <span>{Math.min(Math.round((donorStats.totalAmount / 20000) * 100), 100)}%</span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((donorStats.totalAmount / 20000) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Silver Badge Card */}
+            <div className={`relative bg-gradient-to-br from-gray-100 via-gray-50 to-slate-100 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 ${finalBadge === 'Silver' ? 'ring-4 ring-gray-300 ring-opacity-50' : ''}`}>
+              {finalBadge === 'Silver' && (
+                <div className="absolute -top-2 -right-2 bg-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Current Level
+                </div>
+              )}
+              
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 relative">
+                  <div className="w-full h-full bg-gradient-to-br from-gray-300 to-slate-400 rounded-full flex items-center justify-center text-4xl animate-pulse">
+                    🥈
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-slate-300 rounded-full opacity-0 hover:opacity-30 transition-opacity duration-300"></div>
+                </div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent">
+                  Silver Donor
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">How to Unlock</h4>
+                  <p className="text-sm text-gray-600">
+                    Donate over Rs. 40,000 in monetary contributions or more than 200 non-monetary items/pledges.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-3">Rewards</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      All Bronze rewards
+                    </li>
+                    <li className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Direct school communication
+                    </li>
+                    <li className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Silver donor certificate
+                    </li>
+                    <li className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Quarterly impact meetings
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                {finalBadge === 'Silver' ? (
+                  <div className="flex items-center justify-center space-x-2 text-green-600">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-semibold">Achieved!</span>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Progress to Silver</span>
+                      <span>{Math.min(Math.round((donorStats.totalAmount / 40000) * 100), 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-gray-400 to-slate-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((donorStats.totalAmount / 40000) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Gold Badge Card */}
+            <div className={`relative bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-100 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 ${finalBadge === 'Gold' ? 'ring-4 ring-yellow-300 ring-opacity-50' : ''}`}>
+              {finalBadge === 'Gold' && (
+                <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  Current Level
+                </div>
+              )}
+              
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 relative">
+                  <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-4xl animate-pulse">
+                    🥇
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-full opacity-0 hover:opacity-30 transition-opacity duration-300"></div>
+                </div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent">
+                  Gold Donor
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-yellow-800 mb-2">How to Unlock</h4>
+                  <p className="text-sm text-yellow-700">
+                    Donate over Rs. 80,000 in monetary contributions or more than 400 non-monetary items/pledges.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-yellow-800 mb-3">Rewards</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-center text-sm text-yellow-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      All Silver rewards
+                    </li>
+                    <li className="flex items-center text-sm text-yellow-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      VIP school visits
+                    </li>
+                    <li className="flex items-center text-sm text-yellow-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Gold donor certificate
+                    </li>
+                    <li className="flex items-center text-sm text-yellow-700">
+                      <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Annual recognition ceremony
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                {finalBadge === 'Gold' ? (
+                  <div className="flex items-center justify-center space-x-2 text-green-600">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-semibold">Achieved!</span>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex justify-between text-sm text-yellow-700 mb-2">
+                      <span>Progress to Gold</span>
+                      <span>{Math.min(Math.round((donorStats.totalAmount / 80000) * 100), 100)}%</span>
+                    </div>
+                    <div className="w-full bg-yellow-200 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-yellow-500 to-amber-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((donorStats.totalAmount / 80000) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Learn More Button */}
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setShowBadgeModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2 mx-auto"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Learn More About Badge Rules</span>
+            </button>
           </div>
         </section>
 
@@ -1370,6 +1653,158 @@ Latest Donation Debug:
               >
                 Browse More Campaigns
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Badge Rules Modal */}
+      {showBadgeModal && (
+        <div className="fixed inset-0 backdrop-blur-lg bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">Donor Badge System Rules</h2>
+              <button
+                onClick={() => setShowBadgeModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="space-y-8">
+                {/* Introduction */}
+                <div className="text-center">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-4xl">🏆</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">How Our Badge System Works</h3>
+                  <p className="text-gray-600 max-w-2xl mx-auto">
+                    Our donor badge system recognizes and rewards your generous contributions to education. 
+                    Each badge level unlocks exclusive benefits and recognition opportunities.
+                  </p>
+                </div>
+
+                {/* Badge Levels */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Bronze Rules */}
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 border border-amber-200">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl">
+                        🥉
+                      </div>
+                      <h4 className="text-lg font-bold text-amber-800">Bronze Donor</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <h5 className="font-semibold text-amber-700 mb-1">Requirements:</h5>
+                        <ul className="text-sm text-amber-600 space-y-1">
+                          <li>• Rs. 20,000+ in monetary donations</li>
+                          <li>• OR 100+ non-monetary items/pledges</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-amber-700 mb-1">Benefits:</h5>
+                        <ul className="text-sm text-amber-600 space-y-1">
+                          <li>• Priority campaign support</li>
+                          <li>• Monthly impact reports</li>
+                          <li>• Digital certificate</li>
+                          <li>• Early campaign access</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Silver Rules */}
+                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-6 border border-gray-200">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-gray-300 to-slate-400 rounded-full flex items-center justify-center text-2xl">
+                        🥈
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-700">Silver Donor</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <h5 className="font-semibold text-gray-600 mb-1">Requirements:</h5>
+                        <ul className="text-sm text-gray-500 space-y-1">
+                          <li>• Rs. 40,000+ in monetary donations</li>
+                          <li>• OR 200+ non-monetary items/pledges</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-gray-600 mb-1">Benefits:</h5>
+                        <ul className="text-sm text-gray-500 space-y-1">
+                          <li>• All Bronze benefits</li>
+                          <li>• Direct school communication</li>
+                          <li>• Premium certificate</li>
+                          <li>• Quarterly impact meetings</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gold Rules */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-6 border border-yellow-200">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-2xl">
+                        🥇
+                      </div>
+                      <h4 className="text-lg font-bold text-yellow-800">Gold Donor</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <h5 className="font-semibold text-yellow-700 mb-1">Requirements:</h5>
+                        <ul className="text-sm text-yellow-600 space-y-1">
+                          <li>• Rs. 80,000+ in monetary donations</li>
+                          <li>• OR 400+ non-monetary items/pledges</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-yellow-700 mb-1">Benefits:</h5>
+                        <ul className="text-sm text-yellow-600 space-y-1">
+                          <li>• All Silver benefits</li>
+                          <li>• VIP school visits</li>
+                          <li>• Gold certificate</li>
+                          <li>• Annual recognition ceremony</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Important Notes */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <h4 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    Important Information
+                  </h4>
+                  <ul className="text-sm text-blue-800 space-y-2">
+                    <li>• Badge levels are calculated based on your total lifetime contributions</li>
+                    <li>• Both monetary and non-monetary donations count toward badge progression</li>
+                    <li>• Badge status is updated in real-time as you make new donations</li>
+                    <li>• All benefits are cumulative - higher levels include all lower level benefits</li>
+                    <li>• Certificates are delivered digitally and can be printed for your records</li>
+                    <li>• Special events and recognition ceremonies are held annually</li>
+                  </ul>
+                </div>
+
+                {/* Close Button */}
+                <div className="text-center">
+                  <button 
+                    onClick={() => setShowBadgeModal(false)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
