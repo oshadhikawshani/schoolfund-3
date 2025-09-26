@@ -1,6 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+// Error Handling & UX Components
+import ErrorBoundary from "./components/ErrorBoundary";
+import OfflineIndicator from "./components/OfflineIndicator";
+
 // Pages
 import LoginPage from "./pages/loginpage";
 import RegPage from "./pages/regpage";
@@ -33,31 +37,34 @@ import "./index.css";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/register" element={<RegPage />} />
-        <Route path="/school-request" element={<SchoolAccountForm />} />
-        <Route path="/req-pending" element={<SchoolReqPending />} />
-        <Route path="/admin-review" element={<AdminRequestPage />} />
-        <Route path="/school-main" element={<SchoolMain />} />
-        <Route path="/school-create-campaign" element={<SchoolCreateCampaign />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/principal-login" element={<PrincipalLogin />} />
-        <Route path="/principal-dashboard" element={<PrincipalDashboard />} />
-        <Route path="/school/profile" element={<SchoolProfileDashboard />} />
+    <ErrorBoundary>
+      <Router>
+        <OfflineIndicator />
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/register" element={<RegPage />} />
+          <Route path="/school-request" element={<SchoolAccountForm />} />
+          <Route path="/req-pending" element={<SchoolReqPending />} />
+          <Route path="/admin-review" element={<AdminRequestPage />} />
+          <Route path="/school-main" element={<SchoolMain />} />
+          <Route path="/school-create-campaign" element={<SchoolCreateCampaign />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/principal-login" element={<PrincipalLogin />} />
+          <Route path="/principal-dashboard" element={<PrincipalDashboard />} />
+          <Route path="/school/profile" element={<SchoolProfileDashboard />} />
 
-        <Route path="/donor/register" element={<DonorRegister />} />
-        {/* <Route path="/donhistoryta" element={<DonHistoryTA />} /> */}
-        <Route path="/donor-dashboard" element={<DonorDashboard />} />
-        {/* <Route path="/donor/browse" element={<BrowseCampaigns />} /> */}
-        <Route path="/donor/donate/:id" element={<MonetaryDonationPage />} />
-        <Route path="/donor/nonmonetary/:id" element={<NonMonetaryDonationPage />} />
-        <Route path="/donor/browseCampaigns" element={<BrowseCampaigns />} />
-        <Route path="/donation/success" element={<PaymentSuccess />} />
-        <Route path="/donation/cancel" element={<PaymentCancel />} />
-      </Routes>
-    </Router>
+          <Route path="/donor/register" element={<DonorRegister />} />
+          {/* <Route path="/donhistoryta" element={<DonHistoryTA />} /> */}
+          <Route path="/donor-dashboard" element={<DonorDashboard />} />
+          {/* <Route path="/donor/browse" element={<BrowseCampaigns />} /> */}
+          <Route path="/donor/donate/:id" element={<MonetaryDonationPage />} />
+          <Route path="/donor/nonmonetary/:id" element={<NonMonetaryDonationPage />} />
+          <Route path="/donor/browseCampaigns" element={<BrowseCampaigns />} />
+          <Route path="/donation/success" element={<PaymentSuccess />} />
+          <Route path="/donation/cancel" element={<PaymentCancel />} />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
