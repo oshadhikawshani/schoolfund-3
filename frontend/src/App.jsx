@@ -30,7 +30,7 @@ import PaymentCancel from "./pages/PaymentCancel.jsx";
 // Styles
 import "./index.css";
 
-//app layouts1
+//app layouts2
 function App() {
   return (
     <Router>
