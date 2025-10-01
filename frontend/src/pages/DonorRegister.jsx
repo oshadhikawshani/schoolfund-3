@@ -135,15 +135,8 @@ export default function DonorRegister() {
           {loading ? "Creating account…" : "Create Account"}
         </button>
 
-        {/* Social */}
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" className="rounded-xl border border-slate-300 bg-white py-2.5 font-medium text-slate-700 hover:bg-slate-50">
-            Google
-          </button>
-          <button type="button" className="rounded-xl border border-slate-300 bg-white py-2.5 font-medium text-slate-700 hover:bg-slate-50">
-            Facebook
-          </button>
-        </div>
+        
+     
 
         {/* Link */}
         <p className="text-center text-sm text-slate-600">
