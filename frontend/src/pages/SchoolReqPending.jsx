@@ -1,25 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from "../images/logoskl.jpg";
 
 const SchoolReqPending = () => {
     const [requestData, setRequestData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         const checkRequestStatus = async () => {
-            const email = localStorage.getItem("schoolRequestEmail");
+            const searchParams = new URLSearchParams(location.search);
+            const emailFromQuery = searchParams.get('email');
+            const email = emailFromQuery || localStorage.getItem("schoolRequestEmail");
+
             if (!email) {
                 setError("No request found. Please submit a new request.");
                 setLoading(false);
                 return;
             }
 
+            const baseUrl = import.meta.env.VITE_API_URL || "https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev";
+
             try {
-                const encodedEmail = encodeURIComponent(email);
-                const response = await fetch(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/status/${encodedEmail}`);
+                let response;
+                if (emailFromQuery) {
+                    // Use the query-string variant when email is provided in URL
+                    const encoded = encodeURIComponent(emailFromQuery);
+                    response = await fetch(`${baseUrl}/api/school-requests/status?email=${encoded}`);
+                } else {
+                    // Fallback to path-param using stored email
+                    const encoded = encodeURIComponent(email);
+                    response = await fetch(`${baseUrl}/api/school-requests/status/${encoded}`);
+                }
+
                 if (response.ok) {
                     const data = await response.json();
                     setRequestData(data);
@@ -34,7 +50,7 @@ const SchoolReqPending = () => {
         };
 
         checkRequestStatus();
-    }, []);
+    }, [location.search]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -202,6 +218,35 @@ const SchoolReqPending = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Principal Credentials (visible when approved and credentials exist) */}
+                        {requestData.Status === 'approved' && (requestData.principalUsername || requestData.principalPassword) && (
+                            <div className="mt-8 p-4 rounded-lg border border-green-200 bg-green-50">
+                                <h4 className="text-md font-semibold text-green-900 mb-3">Principal Credentials</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500">Username</label>
+                                        <p className="text-gray-900 font-medium">{requestData.principalUsername || requestData.PrincipalName}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500">Password</label>
+                                        <div className="flex items-center gap-3">
+                                            <p className="text-gray-900 font-mono">
+                                                {showPassword ? (requestData.principalPassword || '—') : '••••••••'}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(v => !v)}
+                                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                            >
+                                                {showPassword ? 'Hide' : 'Show'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-green-800 mt-2">Keep these credentials safe. You can change them after first login.</p>
+                            </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="mt-8 flex flex-col sm:flex-row gap-3">

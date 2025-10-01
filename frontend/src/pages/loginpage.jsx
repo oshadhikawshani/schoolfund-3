@@ -275,7 +275,7 @@ export default function LoginPage() {
               onClick={() => {
                 const email = prompt("Enter your school email to check status:");
                 if (email) {
-                  window.open(`https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/school-requests/status?email=${encodeURIComponent(email)}`, '_blank');
+                  navigate(`/req-pending?email=${encodeURIComponent(email)}`);
                 }
               }}
               className="text-blue-600 hover:text-blue-500 font-medium"
