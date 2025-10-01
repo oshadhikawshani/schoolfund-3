@@ -473,13 +473,15 @@ export default function SchoolCreateCampaign() {
                   <span className="text-gray-400">Donors will be able to opt-in to receive progress updates via email</span>
                 </label>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full text-base transition-colors duration-200 disabled:opacity-60 mt-2"
-                disabled={submittingM}
-              >
-                {submittingM ? "Submitting..." : "Create Campaign"}
-              </button>
+              {selectedType === "Monetary" && (
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full text-base transition-colors duration-200 disabled:opacity-60 mt-2"
+                  disabled={submittingM}
+                >
+                  {submittingM ? "Submitting..." : "Create Campaign"}
+                </button>
+              )}
             </form>
             {messageM && (
               <div className="mt-6 text-center text-lg font-medium text-green-600 animate-pulse">{messageM}</div>
@@ -620,13 +622,15 @@ export default function SchoolCreateCampaign() {
                   <span className="text-gray-400">Donors will be able to opt-in to receive progress updates via email</span>
                 </label>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full text-base transition-colors duration-200 disabled:opacity-60 mt-2"
-                disabled={submittingN}
-              >
-                {submittingN ? "Submitting..." : "Create Campaign"}
-              </button>
+              {selectedType === "Non-Monetary" && (
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full text-base transition-colors duration-200 disabled:opacity-60 mt-2"
+                  disabled={submittingN}
+                >
+                  {submittingN ? "Submitting..." : "Create Campaign"}
+                </button>
+              )}
             </form>
             {messageN && (
               <div className="mt-6 text-center text-lg font-medium text-green-600 animate-pulse">{messageN}</div>
