@@ -261,7 +261,8 @@ export default function AdminRequestPage() {
     req.PrincipalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.Address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.Email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    req.Username?.toLowerCase().includes(searchTerm.toLowerCase())
+    req.Username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    req.SchoolRequestID?.toLowerCase().replace(/_/g, ' ').includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -349,7 +350,7 @@ export default function AdminRequestPage() {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">{req.PrincipalName}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">{(req.SchoolRequestID || req.Username || '').replace(/_/g, ' ') || 'Unknown School'}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <FaUserCircle className="text-gray-400 w-4 h-4" />
                       <span className="text-xs text-gray-600 truncate">{req.Username}</span>

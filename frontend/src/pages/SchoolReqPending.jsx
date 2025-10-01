@@ -176,7 +176,7 @@ const SchoolReqPending = () => {
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-500">School Name</label>
-                                    <p className="text-gray-900 font-medium">{requestData.PrincipalName}</p>
+                                    <p className="text-gray-900 font-medium">{(requestData.SchoolRequestID || '').replace(/_/g, ' ')}</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-500">Principal Name</label>
