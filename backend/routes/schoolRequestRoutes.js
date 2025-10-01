@@ -222,6 +222,11 @@ router.post('/approve/:id', async (req, res) => {
       await principal.save();
     }
 
+    // Persist generated credentials on the school request so status endpoint can expose them
+    request.principalUsername = principalUsername;
+    request.principalPassword = principalPassword;
+    await request.save();
+
     // Send approval email with credentials
     try {
       await sendApprovalEmail(request, { username: principalUsername, password: principalPassword });

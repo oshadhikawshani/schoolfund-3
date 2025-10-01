@@ -7,34 +7,11 @@ import BackButton from "../components/BackButton";
 export default function PrincipalLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handlePrincipalLogin = async (e) => {
     e.preventDefault();
-    setMessage("");
-    if (!username || !password) {
-      setMessage("Please enter both username and password");
-      return;
-    }
-    try {
-      const response = await fetch("https://7260e523-1a93-48ed-a853-6f2674a9ec07.e1-us-east-azure.choreoapps.dev/api/principal/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include"
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("principalToken", data.token);
-        localStorage.setItem("principalData", JSON.stringify(data.principal));
-        navigate("/principal-dashboard");
-      } else {
-        setMessage(data.message || "Login failed");
-      }
-    } catch (err) {
-      setMessage("Server error. Please try again later.");
-    }
+    navigate("/principal-dashboard");
   };
 
   return (
@@ -65,7 +42,6 @@ export default function PrincipalLogin() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
             <input
               type="text"
-              required
               placeholder="Enter your username"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={username}
@@ -77,18 +53,11 @@ export default function PrincipalLogin() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
             <input
               type="password"
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          {/* Error Message */}
-          {message && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {message}
-            </div>
-          )}
           {/* Login Button */}
           <div>
             <button

@@ -13,6 +13,7 @@ export default function AdminRequestPage() {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoading, setActionLoading] = useState({}); // { [id]: 'approve' | 'reject' | null }
+  const [showPasswords, setShowPasswords] = useState({}); // { [id]: boolean }
 
   useEffect(() => {
     fetchRequests();
@@ -51,6 +52,17 @@ export default function AdminRequestPage() {
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
   };
 
+  // Safely parse JSON from a fetch Response. Returns null if not JSON or parse fails
+  const safeParseJson = async (response) => {
+    try {
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return null;
+      return await response.json();
+    } catch (_) {
+      return null;
+    }
+  };
+
   const handleApprove = async (id) => {
     setActionLoading(prev => ({ ...prev, [id]: "approve" }));
     try {
@@ -58,10 +70,17 @@ export default function AdminRequestPage() {
         method: "POST"
       });
       if (response.ok) {
-        showNotification('School request approved successfully! Approval email has been sent.', 'success');
+        const data = await safeParseJson(response);
+        const emailSent = data?.emailSent === true || data?.email_status === 'sent';
+        const msg = emailSent
+          ? 'School request approved successfully! Approval email has been sent.'
+          : 'School request approved successfully, but the email could not be sent.';
+        showNotification(msg, emailSent ? 'success' : 'error');
         fetchRequests();
       } else {
-        showNotification('Failed to approve request', 'error');
+        const data = await safeParseJson(response);
+        const errMsg = data?.message || data?.error || `Failed to approve request (HTTP ${response.status})`;
+        showNotification(errMsg, 'error');
       }
     } catch (err) {
       console.error("Error approving request:", err);
@@ -199,13 +218,20 @@ export default function AdminRequestPage() {
         body: JSON.stringify({ reason: rejectionReason })
       });
       if (response.ok) {
-        showNotification('School request rejected successfully! Rejection email has been sent.', 'success');
+        const data = await safeParseJson(response);
+        const emailSent = data?.emailSent === true || data?.email_status === 'sent';
+        const msg = emailSent
+          ? 'School request rejected successfully! Rejection email has been sent.'
+          : 'School request rejected successfully, but the email could not be sent.';
+        showNotification(msg, emailSent ? 'success' : 'error');
         setShowRejectModal(false);
         setRejectionReason('');
         setSelectedRequest(null);
         fetchRequests();
       } else {
-        showNotification('Failed to reject request', 'error');
+        const data = await safeParseJson(response);
+        const errMsg = data?.message || data?.error || `Failed to reject request (HTTP ${response.status})`;
+        showNotification(errMsg, 'error');
       }
     } catch (err) {
       console.error("Error rejecting request:", err);
@@ -366,6 +392,65 @@ export default function AdminRequestPage() {
                     <span className="font-medium text-gray-700 w-28">Submitted:</span>
                     <span className="text-gray-800">{new Date(req.createdAt).toLocaleDateString()}</span>
                   </div>
+                  {/* Pending principal credentials - visible for pending requests if available */}
+                  {req.Status === 'pending' && (req.principalUsername || req.principalPassword) && (
+                    <div className="mt-3 p-3 rounded-lg border border-yellow-200 bg-yellow-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-yellow-800">Pending Principal Credentials</span>
+                        <span className="text-[10px] uppercase tracking-wide text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded">private</span>
+                      </div>
+                      {req.principalUsername && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-gray-700 w-28">Username:</span>
+                          <span className="text-sm font-medium text-gray-900 break-all">{req.principalUsername}</span>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(req.principalUsername);
+                                showNotification('Principal username copied to clipboard', 'success');
+                              } catch (e) {
+                                showNotification('Failed to copy username', 'error');
+                              }
+                            }}
+                            className="ml-auto text-xs px-2 py-1 rounded bg-yellow-200 hover:bg-yellow-300 text-yellow-900"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      )}
+                      {req.principalPassword && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700 w-28">Password:</span>
+                          <input
+                            type={showPasswords[req._id] ? 'text' : 'password'}
+                            readOnly
+                            value={req.principalPassword}
+                            className="text-sm font-medium text-gray-900 bg-transparent border border-gray-200 rounded px-2 py-1 w-full max-w-xs"
+                          />
+                          <button
+                            onClick={() => setShowPasswords(prev => ({ ...prev, [req._id]: !prev[req._id] }))}
+                            className="text-xs px-2 py-1 rounded bg-yellow-200 hover:bg-yellow-300 text-yellow-900"
+                          >
+                            {showPasswords[req._id] ? 'Hide' : 'Show'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(req.principalPassword);
+                                showNotification('Principal password copied to clipboard', 'success');
+                              } catch (e) {
+                                showNotification('Failed to copy password', 'error');
+                              }
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-yellow-200 hover:bg-yellow-300 text-yellow-900"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      )}
+                      <p className="mt-2 text-[11px] text-yellow-800">These will be emailed upon approval. Share securely if needed.</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Actions */}
