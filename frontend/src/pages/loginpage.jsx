@@ -209,9 +209,13 @@ export default function LoginPage() {
             </a>
           </div> */}
 
-          {/* Error Message */}
+          {/* Message */}
           {message && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
+            <div className={`text-sm text-center p-3 rounded-md ${
+              message.includes('successful') || message.includes('Success') 
+                ? 'text-green-600 bg-green-50' 
+                : 'text-red-600 bg-red-50'
+            }`}>
               {message}
             </div>
           )}
