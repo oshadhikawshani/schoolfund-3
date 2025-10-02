@@ -538,7 +538,7 @@ Latest Donation Debug:
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <img src="/logo.svg" alt="School Fund Logo" className="h-10 w-auto" />
+              <img src="/logo.svg" alt="School Fund Logo" className="h-16 w-auto" />
               <span className="text-xl font-bold text-gray-900">School Fund</span>
             </div>
             <nav className="flex space-x-8 absolute left-1/2 transform -translate-x-1/2">

@@ -589,7 +589,7 @@ export default function BrowseCampaigns() {
               <img
                 src="/logo.svg"
                 alt="School Fund Logo"
-                className="w-10 h-10"
+                className="w-16 h-16"
               />
               {/* <span className="text-xl font-bold text-gray-900">SCHOOL FUND</span> */}
             </div>

@@ -144,7 +144,7 @@ export default function SchoolMain() {
           <img
             src={logo}
             alt="School Logo"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg mb-4"
+            className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-lg mb-4"
           />
           <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
             {schoolData.SchoolRequestID || "School Name"}

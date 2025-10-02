@@ -156,7 +156,7 @@ const SchoolAccountForm = () => {
           <BackButton />
         </div>
         <div className="flex flex-col items-center mb-3 mt-3">
-          <img src={logoSkl} alt="School Logo" className="w-14 h-14 rounded-full shadow mb-1 border-2 border-blue-200 object-cover" />
+          <img src={logoSkl} alt="School Logo" className="w-18 h-18 rounded-full shadow mb-1 border-2 border-blue-200 object-cover" />
           <h2 className="text-xl font-extrabold text-blue-900 text-center tracking-tight">Request Admin Account</h2>
           <p className="text-xs text-gray-500 text-center mt-1">School Registration</p>
         </div>

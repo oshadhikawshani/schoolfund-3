@@ -68,7 +68,7 @@ export default function DonorHistoryTA() {
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
               <BackButton />
-              <img src={logo} alt="Logo" className="h-12 w-12 rounded-lg shadow-sm" />
+              <img src={logo} alt="Logo" className="h-16 w-16 rounded-lg shadow-sm" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">My Donations</h1>
                 <p className="text-sm text-gray-600">Track your contribution history</p>

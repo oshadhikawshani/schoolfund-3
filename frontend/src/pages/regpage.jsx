@@ -51,7 +51,7 @@ export default function RegisterPage() {
         </div>
         {/* Logo and Header */}
         <div className="text-center mb-6">
-          <img src={logo} alt="School Fund Logo" className="w-16 h-16 mx-auto mb-4" />
+          <img src={logo} alt="School Fund Logo" className="w-24 h-24 mx-auto mb-4" />
           <h1 className="text-lg font-semibold text-gray-800 mb-1">ALUMNI FUND</h1>
           <h2 className="text-xl font-bold text-gray-900">Register</h2>
         </div>

@@ -160,8 +160,8 @@ export default function SchoolProfileDashboard() {
       {/* Top Navigation */}
       <header className="bg-white shadow flex items-center justify-between px-8 py-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center font-bold text-xl text-blue-700">
-            <img src={schoolfundLogo} alt="SchoolFund Logo" className="w-12 h-12 rounded-full object-cover" />
+          <div className="w-18 h-18 bg-gray-200 rounded-full flex items-center justify-center font-bold text-xl text-blue-700">
+            <img src={schoolfundLogo} alt="SchoolFund Logo" className="w-16 h-16 rounded-full object-cover" />
           </div>
           <nav className="flex gap-8 text-base font-medium flex-grow justify-center">
             <a href="#" className="flex items-center text-blue-600">
@@ -177,7 +177,7 @@ export default function SchoolProfileDashboard() {
           <img
             src={schoolLogoSrc}
             alt="School Logo"
-            className="w-10 h-10 bg-gray-300 rounded-full object-cover"
+            className="w-14 h-14 bg-gray-300 rounded-full object-cover"
           />
           <button
             onClick={handleLogout}

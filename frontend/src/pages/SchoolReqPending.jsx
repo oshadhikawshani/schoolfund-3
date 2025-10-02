@@ -139,7 +139,7 @@ const SchoolReqPending = () => {
             <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-6">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <img src={logo} alt="School Fund Logo" className="h-12 w-auto" />
+                        <img src={logo} alt="School Fund Logo" className="h-16 w-auto" />
                         <h1 className="text-2xl font-bold text-gray-900">School Request Status</h1>
                     </div>
                     <button

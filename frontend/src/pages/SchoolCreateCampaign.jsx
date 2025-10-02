@@ -274,7 +274,7 @@ export default function SchoolCreateCampaign() {
       <nav className="w-full flex items-center justify-between px-8 py-2 bg-white border-b border-gray-200 shadow-sm mb-8" style={{ minHeight: 60 }}>
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <img src={logoImg} alt="School Fund Logo" className="h-10 w-auto object-contain" />
+          <img src={logoImg} alt="School Fund Logo" className="h-16 w-auto object-contain" />
         </div>
         {/* Menu */}
         <div className="flex-1 flex justify-center">
