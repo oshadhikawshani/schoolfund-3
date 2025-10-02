@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../lib/api"; // <-- use shared axios with Authorization header
 
 export default function NonMonetaryDonationPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState(null);
   const [file, setFile] = useState(null); // single file, backend expects "photo"
   const [quantity, setQuantity] = useState(1); // Added quantity state
@@ -79,6 +80,19 @@ export default function NonMonetaryDonationPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-10">
+        <button
+          onClick={() => navigate('/donor-dashboard')}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-white hover:bg-blue-600 text-blue-600 hover:text-white transition-colors focus:outline-none shadow-lg"
+          aria-label="Back to dashboard"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+      
       <div className="max-w-4xl mx-auto">
         {/* Campaign Header */}
         {/* <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 mb-8">

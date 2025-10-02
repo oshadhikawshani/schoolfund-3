@@ -266,7 +266,7 @@ router.post("/nonmonetary", verifyDonorAuth, upload.single("photo"), async (req,
 
     return res.status(201).json({
       success: true,
-      message: "Non-monetary donation intent received",
+      message: "Thank you for your generous donation! Your contribution has been received and will make a real difference.",
       donationId: donation._id,
       file: req.file.filename,
       collectionDeadline: deadlineDate || null,
